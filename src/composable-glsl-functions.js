@@ -213,7 +213,7 @@ float _noise(vec3 v){
       return vec4(vec3(1.0-smoothstep(radius,radius + smoothing,d)), 1.0);
     }`
   },
-  sdasmoke: {
+  smoke: {
     type: 'src',
     inputs: [
       {
@@ -222,7 +222,7 @@ float _noise(vec3 v){
         default: 1.0
       }
     ],
-    glsl: `vec4 sdasmoke(vec2 _st, float zoom) {
+    glsl: `vec4 smoke(vec2 _st, float zoom) {
       vec2 p = -1.0+2.0*_st;
       int z = 2;
       if (zoom<9.) z = 9;
@@ -240,7 +240,7 @@ float _noise(vec3 v){
     }
     `
   },
-  sda01: {
+  circles: {
     type: 'src',
     inputs: [
       {
@@ -249,24 +249,27 @@ float _noise(vec3 v){
         default: 0.0
       }
     ],
-    glsl: `vec4 sda01(vec2 _st, float speed) {
-      float t = mod(time* 2., 3.1415 * 2.);
-      float a = 0.;
-      for(float i = 1.; i <= 3.; ++i) {	
-        a += sin(t * (i * 2. - 1.)) / (i * 2. - 1.);
+    glsl: `vec4 circles(vec2 _st, float speed) {
+      return vec4(sin(length(_st-0.5)*10.0-time*speed));
+    }
+    `
+  },  
+  hexler330: {
+    type: 'src',
+    inputs: [
+      {
+        name: 'speed',
+        type: 'float',
+        default: 0.0
       }
-      a = a * 1.15 / 2. + .5;
-      
-      float power = 2. / (1. - min(a, .98));
-      float x = pow((1.+2.*a)*abs(_st.x), power);
-      float y = pow(abs(_st.y), power);
-      float r = _st.y / 2.;
-      float v = pow(x+y, 1./power);
-      float l = (1. - v) * r;
-      float l2 = (r/2. - l*(1.-a));
-      float s = clamp(min(l, l2), 0., 1.);
-      vec3 col = vec3(1.,1.,1.);
-      return vec4(s);
+    ],
+    glsl: `vec4 hexler330(vec2 _st, float speed) {
+      vec2 uv = -1.0 + 2.0 *_st;
+      float radius = length(uv);
+	    float angle = atan(uv.y,uv.x);	
+      float col = 1.5*sin(time + 13.0 * angle + uv.y * 20.);
+      col += cos(.9 * uv.x * angle * 60.0 + radius * 5.0 -time * 2.);
+      return vec4( (1.2 - radius) * col );
     }
     `
   },  
@@ -283,7 +286,6 @@ float _noise(vec3 v){
       // https://www.shadertoy.com/view/MtlGz8
       vec2 div = vec2( divs, divs );
       vec2 uv = -1.0+2.0*_st;
-      //float b = 1.0;// 4.0*divs/iResolution.x;
       vec2 xy = div*uv;
       vec2 S;
       S.x = (xy.x + xy.y)*(xy.x - xy.y)*0.5;
