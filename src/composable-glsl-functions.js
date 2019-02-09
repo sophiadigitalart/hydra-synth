@@ -213,6 +213,63 @@ float _noise(vec3 v){
       return vec4(vec3(1.0-smoothstep(radius,radius + smoothing,d)), 1.0);
     }`
   },
+  sdasmoke: {
+    type: 'src',
+    inputs: [
+      {
+        name: 'zoom',
+        type: 'float',
+        default: 1.0
+      }
+    ],
+    glsl: `vec4 sdasmoke(vec2 _st, float zoom) {
+      vec2 p = -1.0+2.0*_st;
+      int z = 2;
+      if (zoom<9.) z = 9;
+      if (zoom<8.) z = 8;
+      if (zoom<7.) z = 7;
+      if (zoom<6.) z = 6;
+      if (zoom<5.) z = 5;
+      if (zoom<4.) z = 4;
+      if (zoom<3.) z = 3;
+      if (zoom<2.) z = 2;
+      if (zoom<1.) z = 1;
+      float w = sin(time+6.5*sqrt(dot(p,p))*cos(p.x));
+      float x = cos(atan(p.y,p.x)*float(z) + 1.8*w);
+      return vec4(x,x,x,1.);
+    }
+    `
+  },
+  sda01: {
+    type: 'src',
+    inputs: [
+      {
+        name: 'speed',
+        type: 'float',
+        default: 0.0
+      }
+    ],
+    glsl: `vec4 sda01(vec2 _st, float speed) {
+      float t = mod(time* 2., 3.1415 * 2.);
+      float a = 0.;
+      for(float i = 1.; i <= 3.; ++i) {	
+        a += sin(t * (i * 2. - 1.)) / (i * 2. - 1.);
+      }
+      a = a * 1.15 / 2. + .5;
+      
+      float power = 2. / (1. - min(a, .98));
+      float x = pow((1.+2.*a)*abs(_st.x), power);
+      float y = pow(abs(_st.y), power);
+      float r = _st.y / 2.;
+      float v = pow(x+y, 1./power);
+      float l = (1. - v) * r;
+      float l2 = (r/2. - l*(1.-a));
+      float s = clamp(min(l, l2), 0., 1.);
+      vec3 col = vec3(1.,1.,1.);
+      return vec4(s);
+    }
+    `
+  },
   gradient: {
     type: 'src',
     inputs: [
