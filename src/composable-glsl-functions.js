@@ -240,6 +240,32 @@ float _noise(vec3 v){
     }
     `
   },
+  tunnel: {
+    type: 'src',
+    inputs: [
+      {
+        name: 'speed',
+        type: 'float',
+        default: 0.0
+      }
+    ],
+    glsl: `vec4 tunnel(vec2 _st, float speed) {
+      vec2 p = -1.0+2.0*_st;
+      vec4 col;
+      float x,y;
+      x = atan(p.x,p.y);
+      y = 1./length(p.xy);
+      col.x = sin(x*5. + sin(time)/3.) * sin(y*5. + time);
+      col.y = sin(x*5. - time + sin(y+time*3.));
+      col.z = -col.x + col.y * sin(y*4.+time);
+      col = clamp(col,0.,0.7);
+      col.y = pow(col.y,.015);
+      col.z = pow(col.z,.01);
+  
+      return col*length(p.xy);
+    }
+    `
+  },  
   colorgrid: {
     type: 'src',
     inputs: [
@@ -254,6 +280,31 @@ float _noise(vec3 v){
       vec3  co = 0.5 + 0.5*cos(time + 3.5*id + vec3(0.0,1.57,3.14) );
       vec2  pa = smoothstep( 0.0, 0.2, id*(0.5 + 0.5*cos(6.2831*_st*speed)) );
       return vec4( co*pa.x*pa.y, 1.0 );
+    }
+    `
+  },
+  silexars: {
+    type: 'src',
+    inputs: [
+      {
+        name: 'speed',
+        type: 'float',
+        default: 0.0
+      }
+    ],
+    glsl: `vec4 silexars(vec2 _st, float speed) {
+      vec3 c;
+      float l,z=time;
+      for(int i=0;i<3;i++) {
+        vec2 uv,p=_st;
+        uv=p;
+        p-=.5;
+        z+=.07;
+        l=length(p);
+        uv+=p/l*(sin(z)+1.)*abs(sin(l*9.-z*2.));
+        c[i]=.01/length(abs(mod(uv,1.)-.5));
+      }
+      return vec4(c/l,time);
     }
     `
   },
