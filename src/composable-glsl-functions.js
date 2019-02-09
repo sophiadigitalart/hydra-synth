@@ -269,6 +269,40 @@ float _noise(vec3 v){
       return vec4(s);
     }
     `
+  },  
+  floxdots: {
+    type: 'src',
+    inputs: [
+      {
+        name: 'divs',
+        type: 'float',
+        default: 12.0
+      }
+    ],
+    glsl: `vec4 floxdots(vec2 _st, float divs) {
+      // https://www.shadertoy.com/view/MtlGz8
+      vec2 div = vec2( divs, divs );
+      vec2 uv = -1.0+2.0*_st;
+      //uv -= 0.5;                                  // center on screen
+      float b = 1.0;///4.0*divs/iResolution.x;       // blur over 2.4 pixels
+      vec2 xy = div*uv;
+      
+      vec2 S;
+      S.x = (xy.x + xy.y)*(xy.x - xy.y)*0.5;      // "velocity potential"
+      S.y = xy.x*xy.y;                            // stream function
+      S.x -= time*3.0;                     // animate stream
+      
+      vec2 sxy = sin(3.14159*S);
+      float a = sxy.x * sxy.y;                    // combine sine waves using product
+      
+      //a = 0.5*a + 0.5;                            // remap to [0..1]
+      a = smoothstep( 0.85-b, 0.85+b, a );        // threshold
+      
+      float c = sqrt( a );                        // correct for gamma
+
+      return vec4(c);
+    }
+    `
   },
   gradient: {
     type: 'src',
