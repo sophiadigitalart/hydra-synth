@@ -283,23 +283,18 @@ float _noise(vec3 v){
       // https://www.shadertoy.com/view/MtlGz8
       vec2 div = vec2( divs, divs );
       vec2 uv = -1.0+2.0*_st;
-      //uv -= 0.5;                                  // center on screen
-      float b = 1.0;///4.0*divs/iResolution.x;       // blur over 2.4 pixels
+      //float b = 1.0;// 4.0*divs/iResolution.x;
       vec2 xy = div*uv;
-      
       vec2 S;
-      S.x = (xy.x + xy.y)*(xy.x - xy.y)*0.5;      // "velocity potential"
-      S.y = xy.x*xy.y;                            // stream function
-      S.x -= time*3.0;                     // animate stream
-      
+      S.x = (xy.x + xy.y)*(xy.x - xy.y)*0.5;
+      S.y = xy.x*xy.y;
+      S.x -= time*3.0;
       vec2 sxy = sin(3.14159*S);
-      float a = sxy.x * sxy.y;                    // combine sine waves using product
-      
-      //a = 0.5*a + 0.5;                            // remap to [0..1]
-      a = smoothstep( 0.85-b, 0.85+b, a );        // threshold
-      
-      float c = sqrt( a );                        // correct for gamma
-
+      float a = sxy.x * sxy.y;
+      //a = 0.5*a + 0.5;
+      float b = length(sxy)*0.7071;
+      a = smoothstep( 0.85-b, 0.85+b, a );
+      float c = sqrt( a );
       return vec4(c);
     }
     `
