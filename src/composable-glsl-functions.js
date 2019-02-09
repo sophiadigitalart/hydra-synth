@@ -308,6 +308,37 @@ float _noise(vec3 v){
     }
     `
   },
+  dancing: {
+    type: 'src',
+    inputs: [
+      {
+        name: 'speed',
+        type: 'float',
+        default: 0.0
+      }
+    ],
+    glsl: `vec4 dancing(vec2 _st, float speed) {
+      vec2 p = -1.0+2.0*_st;
+      float beat = 0.;
+      float ct = time/2.0;
+      if ((ct > 8.0 && ct < 33.5)
+      || (ct > 38.0 && ct < 88.5)
+      || (ct > 93.0 && ct < 194.5))
+        beat = pow(sin(ct*3.1416*3.78+1.9)*0.5+0.5,15.0)*0.1;
+      
+      for(float i=1.;i<40.;i++)
+      {
+        vec2 newp=p;
+        newp.x+=0.5/i*cos(i*p.y+beat+time*cos(ct)*0.3/40.0+0.03*i)+10.0;
+        newp.y+=0.5/i*cos(i*p.x+beat+time*ct*0.3/50.0+0.03*(i+10.))+15.0;
+        p=newp;
+      } 
+      
+      return vec4(0.5*sin(3.0*p.x)+0.5,0.5*sin(3.0*p.y)+0.5,sin(p.x+p.y),1.0);
+      
+    }
+    `
+  },
   circles: {
     type: 'src',
     inputs: [
