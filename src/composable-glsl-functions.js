@@ -240,6 +240,23 @@ float _noise(vec3 v){
     }
     `
   },
+  colorgrid: {
+    type: 'src',
+    inputs: [
+      {
+        name: 'speed',
+        type: 'float',
+        default: 0.0
+      }
+    ],
+    glsl: `vec4 colorgrid(vec2 _st, float speed) {
+      float id = 0.5 + 0.5*cos(time + sin(dot(floor(_st*speed+0.5),vec2(113.1,17.81)))*43758.545);
+      vec3  co = 0.5 + 0.5*cos(time + 3.5*id + vec3(0.0,1.57,3.14) );
+      vec2  pa = smoothstep( 0.0, 0.2, id*(0.5 + 0.5*cos(6.2831*_st*speed)) );
+      return vec4( co*pa.x*pa.y, 1.0 );
+    }
+    `
+  },
   circles: {
     type: 'src',
     inputs: [
@@ -261,9 +278,19 @@ float _noise(vec3 v){
         name: 'speed',
         type: 'float',
         default: 0.0
+      },
+      {
+        name: 'red',
+        type: 'float',
+        default: 0.1
+      },
+      {
+        name: 'green',
+        type: 'float',
+        default: 0.1
       }
     ],
-    glsl: `vec4 stars(vec2 _st, float speed) {
+    glsl: `vec4 stars(vec2 _st, float speed, float red, float green) {
       // https://www.shadertoy.com/view/lsf3z2
       vec2 p = -1.0 + 2.0 *_st;
       float M_PI = 3.141592653589793;
@@ -271,7 +298,17 @@ float _noise(vec3 v){
       float angle = atan(p.y, p.x);
       float radius = sqrt(p.x*p.x + p.y*p.y);
     
-      float n = speed;//9.0;
+      //float n = speed;//9.0;
+      float n = 2.;
+      if (speed<9.) n = 9.;
+      if (speed<8.) n = 8.;
+      if (speed<7.) n = 7.;
+      if (speed<6.) n = 6.;
+      if (speed<5.) n = 5.;
+      if (speed<4.) n = 4.;
+      if (speed<3.) n = 3.;
+      if (speed<2.) n = 2.;
+      if (speed<1.) n = 1.;
       float angle_offset = 5.1*sin(0.3*time);
       float k_amplitude = 0.9*cos(1.2*time);
       float radius2 = radius + pow(radius, 2.0)*k_amplitude*sin(n*angle + angle_offset);
@@ -283,11 +320,11 @@ float _noise(vec3 v){
       float modulus = mod((radius2 + k_t*time) / width, 3.0);
       if(modulus < 1.0) {
         //color = vec3(0.5, 0.0, 0.8);
-        color = vec3(0.0, 0.14, 0.3);
+        color = vec3(red, 0.14, 0.3);
       } else if(modulus < 2.0) {
         color = vec3(0.0, 0.0, 0.1);
       } else {
-        color = vec3(0.2, 0.1, 0.0);
+        color = vec3(0.2, green, 0.0);
       }
       color /= 0.2 + pow(radius, 2.0);
       return vec4(color, 1.0);
