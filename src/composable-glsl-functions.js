@@ -213,253 +213,6 @@ float _noise(vec3 v){
       return vec4(vec3(1.0-smoothstep(radius,radius + smoothing,d)), 1.0);
     }`
   },
-  smoke: {
-    type: 'src',
-    inputs: [
-      {
-        name: 'zoom',
-        type: 'float',
-        default: 1.0
-      }
-    ],
-    glsl: `vec4 smoke(vec2 _st, float zoom) {
-      vec2 p = -1.0+2.0*_st;
-      int z = 2;
-      if (zoom<9.) z = 9;
-      if (zoom<8.) z = 8;
-      if (zoom<7.) z = 7;
-      if (zoom<6.) z = 6;
-      if (zoom<5.) z = 5;
-      if (zoom<4.) z = 4;
-      if (zoom<3.) z = 3;
-      if (zoom<2.) z = 2;
-      if (zoom<1.) z = 1;
-      float w = sin(time+6.5*sqrt(dot(p,p))*cos(p.x));
-      float x = cos(atan(p.y,p.x)*float(z) + 1.8*w);
-      return vec4(x,x,x,1.);
-    }
-    `
-  },
-  tunnel: {
-    type: 'src',
-    inputs: [
-      {
-        name: 'speed',
-        type: 'float',
-        default: 0.0
-      }
-    ],
-    glsl: `vec4 tunnel(vec2 _st, float speed) {
-      vec2 p = -1.0+2.0*_st;
-      vec4 col;
-      float x,y;
-      x = atan(p.x,p.y);
-      y = 1./length(p.xy);
-      col.x = sin(x*5. + sin(time)/3.) * sin(y*5. + time);
-      col.y = sin(x*5. - time + sin(y+time*3.));
-      col.z = -col.x + col.y * sin(y*4.+time);
-      col = clamp(col,0.,0.7);
-      col.y = pow(col.y,.015);
-      col.z = pow(col.z,.01);
-  
-      return col*length(p.xy);
-    }
-    `
-  },  
-  colorgrid: {
-    type: 'src',
-    inputs: [
-      {
-        name: 'speed',
-        type: 'float',
-        default: 0.0
-      }
-    ],
-    glsl: `vec4 colorgrid(vec2 _st, float speed) {
-      float id = 0.5 + 0.5*cos(time + sin(dot(floor(_st*speed+0.5),vec2(113.1,17.81)))*43758.545);
-      vec3  co = 0.5 + 0.5*cos(time + 3.5*id + vec3(0.0,1.57,3.14) );
-      vec2  pa = smoothstep( 0.0, 0.2, id*(0.5 + 0.5*cos(6.2831*_st*speed)) );
-      return vec4( co*pa.x*pa.y, 1.0 );
-    }
-    `
-  },
-  silexars: {
-    type: 'src',
-    inputs: [
-      {
-        name: 'speed',
-        type: 'float',
-        default: 0.0
-      }
-    ],
-    glsl: `vec4 silexars(vec2 _st, float speed) {
-      vec3 c;
-      float l,z=time;
-      for(int i=0;i<3;i++) {
-        vec2 uv,p=_st;
-        uv=p;
-        p-=.5;
-        z+=.07;
-        l=length(p);
-        uv+=p/l*(sin(z)+1.)*abs(sin(l*9.-z*2.));
-        c[i]=.01/length(abs(mod(uv,1.)-.5));
-      }
-      return vec4(c/l,time);
-    }
-    `
-  },
-  dancing: {
-    type: 'src',
-    inputs: [
-      {
-        name: 'speed',
-        type: 'float',
-        default: 0.0
-      }
-    ],
-    glsl: `vec4 dancing(vec2 _st, float speed) {
-      vec2 p = -1.0+2.0*_st;
-      float beat = 0.;
-      float ct = time/2.0;
-      if ((ct > 8.0 && ct < 33.5)
-      || (ct > 38.0 && ct < 88.5)
-      || (ct > 93.0 && ct < 194.5))
-        beat = pow(sin(ct*3.1416*3.78+1.9)*0.5+0.5,15.0)*0.1;
-      
-      for(float i=1.;i<40.;i++)
-      {
-        vec2 newp=p;
-        newp.x+=0.5/i*cos(i*p.y+beat+time*cos(ct)*0.3/40.0+0.03*i)+10.0;
-        newp.y+=0.5/i*cos(i*p.x+beat+time*ct*0.3/50.0+0.03*(i+10.))+15.0;
-        p=newp;
-      } 
-      
-      return vec4(0.5*sin(3.0*p.x)+0.5,0.5*sin(3.0*p.y)+0.5,sin(p.x+p.y),1.0);
-      
-    }
-    `
-  },
-  circles: {
-    type: 'src',
-    inputs: [
-      {
-        name: 'speed',
-        type: 'float',
-        default: 0.0
-      }
-    ],
-    glsl: `vec4 circles(vec2 _st, float speed) {
-      return vec4(sin(length(_st-0.5)*10.0-time*speed));
-    }
-    `
-  },
-  stars: {
-    type: 'src',
-    inputs: [
-      {
-        name: 'speed',
-        type: 'float',
-        default: 0.0
-      },
-      {
-        name: 'red',
-        type: 'float',
-        default: 0.1
-      },
-      {
-        name: 'green',
-        type: 'float',
-        default: 0.1
-      }
-    ],
-    glsl: `vec4 stars(vec2 _st, float speed, float red, float green) {
-      // https://www.shadertoy.com/view/lsf3z2
-      vec2 p = -1.0 + 2.0 *_st;
-      float M_PI = 3.141592653589793;
-      float M_2PI = 6.283185307179586;
-      float angle = atan(p.y, p.x);
-      float radius = sqrt(p.x*p.x + p.y*p.y);
-    
-      //float n = speed;//9.0;
-      float n = 2.;
-      if (speed<9.) n = 9.;
-      if (speed<8.) n = 8.;
-      if (speed<7.) n = 7.;
-      if (speed<6.) n = 6.;
-      if (speed<5.) n = 5.;
-      if (speed<4.) n = 4.;
-      if (speed<3.) n = 3.;
-      if (speed<2.) n = 2.;
-      if (speed<1.) n = 1.;
-      float angle_offset = 5.1*sin(0.3*time);
-      float k_amplitude = 0.9*cos(1.2*time);
-      float radius2 = radius + pow(radius, 2.0)*k_amplitude*sin(n*angle + angle_offset);
-      float width = 0.05;
-      float k_t = -0.04;
-      
-      float n_inv = 1.0 / float(n);
-      vec3 color;
-      float modulus = mod((radius2 + k_t*time) / width, 3.0);
-      if(modulus < 1.0) {
-        //color = vec3(0.5, 0.0, 0.8);
-        color = vec3(red, 0.14, 0.3);
-      } else if(modulus < 2.0) {
-        color = vec3(0.0, 0.0, 0.1);
-      } else {
-        color = vec3(0.2, green, 0.0);
-      }
-      color /= 0.2 + pow(radius, 2.0);
-      return vec4(color, 1.0);
-    }
-    `
-  },
-  hexler330: {
-    type: 'src',
-    inputs: [
-      {
-        name: 'speed',
-        type: 'float',
-        default: 0.0
-      }
-    ],
-    glsl: `vec4 hexler330(vec2 _st, float speed) {
-      vec2 uv = -1.0 + 2.0 *_st;
-      float radius = length(uv);
-	    float angle = atan(uv.y,uv.x);	
-      float col = 1.5*sin(time + 13.0 * angle + uv.y * 20.);
-      col += cos(.9 * uv.x * angle * 60.0 + radius * 5.0 -time * 2.);
-      return vec4( (1.2 - radius) * col );
-    }
-    `
-  },  
-  floxdots: {
-    type: 'src',
-    inputs: [
-      {
-        name: 'divs',
-        type: 'float',
-        default: 12.0
-      }
-    ],
-    glsl: `vec4 floxdots(vec2 _st, float divs) {
-      // https://www.shadertoy.com/view/MtlGz8
-      vec2 div = vec2( divs, divs );
-      vec2 uv = -1.0+2.0*_st;
-      vec2 xy = div*uv;
-      vec2 S;
-      S.x = (xy.x + xy.y)*(xy.x - xy.y)*0.5;
-      S.y = xy.x*xy.y;
-      S.x -= time*3.0;
-      vec2 sxy = sin(3.14159*S);
-      float a = sxy.x * sxy.y;
-      //a = 0.5*a + 0.5;
-      float b = length(sxy)*0.7071;
-      a = smoothstep( 0.85-b, 0.85+b, a );
-      float c = sqrt( a );
-      return vec4(c);
-    }
-    `
-  },
   gradient: {
     type: 'src',
     inputs: [
@@ -1322,5 +1075,362 @@ float _noise(vec3 v){
       c = fract(c);
       return vec4(c, c0.a);
     }`
-  }
+  },
+  smoke: {
+    type: 'src',
+    inputs: [
+      {
+        name: 'zoom',
+        type: 'float',
+        default: 1.0
+      }
+    ],
+    glsl: `vec4 smoke(vec2 _st, float zoom) {
+      vec2 p = -1.0+2.0*_st;
+      int z = 2;
+      if (zoom<9.) z = 9;
+      if (zoom<8.) z = 8;
+      if (zoom<7.) z = 7;
+      if (zoom<6.) z = 6;
+      if (zoom<5.) z = 5;
+      if (zoom<4.) z = 4;
+      if (zoom<3.) z = 3;
+      if (zoom<2.) z = 2;
+      if (zoom<1.) z = 1;
+      float w = sin(time+6.5*sqrt(dot(p,p))*cos(p.x));
+      float x = cos(atan(p.y,p.x)*float(z) + 1.8*w);
+      return vec4(x,x,x,1.);
+    }
+    `
+  },
+  tunnel: {
+    type: 'src',
+    inputs: [
+      {
+        name: 'speed',
+        type: 'float',
+        default: 0.0
+      }
+    ],
+    glsl: `vec4 tunnel(vec2 _st, float speed) {
+      vec2 p = -1.0+2.0*_st;
+      vec4 col;
+      float x,y;
+      x = atan(p.x,p.y);
+      y = 1./length(p.xy);
+      col.x = sin(x*5. + sin(time)/3.) * sin(y*5. + time);
+      col.y = sin(x*5. - time + sin(y+time*3.));
+      col.z = -col.x + col.y * sin(y*4.+time);
+      col = clamp(col,0.,0.7);
+      col.y = pow(col.y,.015);
+      col.z = pow(col.z,.01);
+  
+      return col*length(p.xy);
+    }
+    `
+  },  
+  colorgrid: {
+    type: 'src',
+    inputs: [
+      {
+        name: 'speed',
+        type: 'float',
+        default: 0.0
+      }
+    ],
+    glsl: `vec4 colorgrid(vec2 _st, float speed) {
+      float id = 0.5 + 0.5*cos(time + sin(dot(floor(_st*speed+0.5),vec2(113.1,17.81)))*43758.545);
+      vec3  co = 0.5 + 0.5*cos(time + 3.5*id + vec3(0.0,1.57,3.14) );
+      vec2  pa = smoothstep( 0.0, 0.2, id*(0.5 + 0.5*cos(6.2831*_st*speed)) );
+      return vec4( co*pa.x*pa.y, 1.0 );
+    }
+    `
+  },
+  silexars: {
+    type: 'src',
+    inputs: [
+      {
+        name: 'speed',
+        type: 'float',
+        default: 0.0
+      }
+    ],
+    glsl: `vec4 silexars(vec2 _st, float speed) {
+      vec3 c;
+      float l,z=time;
+      for(int i=0;i<3;i++) {
+        vec2 uv,p=_st;
+        uv=p;
+        p-=.5;
+        z+=.07;
+        l=length(p);
+        uv+=p/l*(sin(z)+1.)*abs(sin(l*9.-z*2.));
+        c[i]=.01/length(abs(mod(uv,1.)-.5));
+      }
+      return vec4(c/l,time);
+    }
+    `
+  },
+  dancing: {
+    type: 'src',
+    inputs: [
+      {
+        name: 'speed',
+        type: 'float',
+        default: 0.0
+      }
+    ],
+    glsl: `vec4 dancing(vec2 _st, float speed) {
+      vec2 p = -1.0+2.0*_st;
+      float beat = 0.;
+      float ct = time/2.0;
+      if ((ct > 8.0 && ct < 33.5)
+      || (ct > 38.0 && ct < 88.5)
+      || (ct > 93.0 && ct < 194.5))
+        beat = pow(sin(ct*3.1416*3.78+1.9)*0.5+0.5,15.0)*0.1;
+      
+      for(float i=1.;i<40.;i++)
+      {
+        vec2 newp=p;
+        newp.x+=0.5/i*cos(i*p.y+beat+time*cos(ct)*0.3/40.0+0.03*i)+10.0;
+        newp.y+=0.5/i*cos(i*p.x+beat+time*ct*0.3/50.0+0.03*(i+10.))+15.0;
+        p=newp;
+      } 
+      
+      return vec4(0.5*sin(3.0*p.x)+0.5,0.5*sin(3.0*p.y)+0.5,sin(p.x+p.y),1.0);
+      
+    }
+    `
+  },
+
+  bump: {
+    type: 'util',
+    glsl: `float bump(float x) {
+      return abs(x) > 1.0 ? 0.0 : 1.0 - x * x;
+    }`
+  },
+  rainbow: {
+    type: 'src',
+    inputs: [
+      {
+        name: 'volume',
+        type: 'float',
+        default: 0.0
+      }
+    ],
+    glsl: `vec4 rainbow(vec2 _st, float volume) {
+      // https://www.shadertoy.com/view/ldX3D8
+      vec2 uv = _st;
+      float c = 3.0;
+      vec3 color = vec3(1.0);
+      color.x = bump(c * (uv.x - 0.75));
+      color.y = bump(c * (uv.x - 0.5));
+      color.z = bump(c * (uv.x - 0.25));
+      uv.y -= 0.5;
+      float line = abs(0.01 / uv.y);   
+      color *= line * (uv.x + volume * 1.5);
+      return vec4(color, 1.0);
+    }
+    `
+  },
+  stars: {
+    type: 'src',
+    inputs: [
+      {
+        name: 'speed',
+        type: 'float',
+        default: 0.0
+      },
+      {
+        name: 'red',
+        type: 'float',
+        default: 0.1
+      },
+      {
+        name: 'green',
+        type: 'float',
+        default: 0.1
+      }
+    ],
+    glsl: `vec4 stars(vec2 _st, float speed, float red, float green) {
+      // https://www.shadertoy.com/view/lsf3z2
+      vec2 p = -1.0 + 2.0 *_st;
+      float M_PI = 3.141592653589793;
+      float M_2PI = 6.283185307179586;
+      float angle = atan(p.y, p.x);
+      float radius = sqrt(p.x*p.x + p.y*p.y);
+    
+      //float n = speed;//9.0;
+      float n = 2.;
+      if (speed<9.) n = 9.;
+      if (speed<8.) n = 8.;
+      if (speed<7.) n = 7.;
+      if (speed<6.) n = 6.;
+      if (speed<5.) n = 5.;
+      if (speed<4.) n = 4.;
+      if (speed<3.) n = 3.;
+      if (speed<2.) n = 2.;
+      if (speed<1.) n = 1.;
+      float angle_offset = 5.1*sin(0.3*time);
+      float k_amplitude = 0.9*cos(1.2*time);
+      float radius2 = radius + pow(radius, 2.0)*k_amplitude*sin(n*angle + angle_offset);
+      float width = 0.05;
+      float k_t = -0.04;
+      
+      float n_inv = 1.0 / float(n);
+      vec3 color;
+      float modulus = mod((radius2 + k_t*time) / width, 3.0);
+      if(modulus < 1.0) {
+        //color = vec3(0.5, 0.0, 0.8);
+        color = vec3(red, 0.14, 0.3);
+      } else if(modulus < 2.0) {
+        color = vec3(0.0, 0.0, 0.1);
+      } else {
+        color = vec3(0.2, green, 0.0);
+      }
+      color /= 0.2 + pow(radius, 2.0);
+      return vec4(color, 1.0);
+    }
+    `
+  },
+  hexler330: {
+    type: 'src',
+    inputs: [
+      {
+        name: 'speed',
+        type: 'float',
+        default: 0.0
+      }
+    ],
+    glsl: `vec4 hexler330(vec2 _st, float speed) {
+      vec2 uv = -1.0 + 2.0 *_st;
+      float radius = length(uv);
+	    float angle = atan(uv.y,uv.x);	
+      float col = 1.5*sin(time + 13.0 * angle + uv.y * 20.);
+      col += cos(.9 * uv.x * angle * 60.0 + radius * 5.0 -time * 2.);
+      return vec4( (1.2 - radius) * col );
+    }
+    `
+  },  
+  floxdots: {
+    type: 'src',
+    inputs: [
+      {
+        name: 'divs',
+        type: 'float',
+        default: 12.0
+      }
+    ],
+    glsl: `vec4 floxdots(vec2 _st, float divs) {
+      // https://www.shadertoy.com/view/MtlGz8
+      vec2 div = vec2( divs, divs );
+      vec2 uv = -1.0+2.0*_st;
+      vec2 xy = div*uv;
+      vec2 S;
+      S.x = (xy.x + xy.y)*(xy.x - xy.y)*0.5;
+      S.y = xy.x*xy.y;
+      S.x -= time*3.0;
+      vec2 sxy = sin(3.14159*S);
+      float a = sxy.x * sxy.y;
+      //a = 0.5*a + 0.5;
+      float b = length(sxy)*0.7071;
+      a = smoothstep( 0.85-b, 0.85+b, a );
+      float c = sqrt( a );
+      return vec4(c);
+    }
+    `
+  },
+  calcColor: {
+    type: 'util',
+    glsl: `vec3 calcColor(vec3 c) {
+      return _rgbToHsv(vec3(c.x * 0.04 + time, 1., 1.));
+    }`
+  },
+  groundDist: {
+    type: 'util',
+    glsl: `float groundDist(vec3 c) {
+      c.y += sin(c.z * 0.2 + c.x + time * 10.0) * 0.5;
+      c.x = mod(c.x, 4.0) - 2.0;
+      return length(c.yx);
+    }`
+  },
+  dist: {
+    type: 'util',
+    glsl: `float dist(vec3 c) {
+      float d = 3.402823466E+38;
+      d = min(d, groundDist(c));
+      return d;
+    }`
+  },
+  dreadsmarch: {
+    type: 'util',
+    inputs: [
+      {
+        name: 'pos',
+        type: 'vec3'
+      },
+      {
+        name: 'dir',
+        type: 'vec3'
+      }
+    ],
+    glsl: `vec3 dreadsmarch(vec3 pos, vec3 dir) {
+      vec3 color = vec3(0.0, 0.0, 0.0);
+      for (int i = 0; i < 32; ++i)
+      {
+          float d = dist(pos);
+          pos += dir * d * 0.9;
+          color += max(vec3(0.0), 0.02 / d * calcColor(pos));
+      }
+      return color;
+    }`
+  },  
+  dreads: {
+    type: 'src',
+    inputs: [
+      {
+        name: 'volume',
+        type: 'float',
+        default: 0.01
+      },
+      {
+        name: 'x',
+        type: 'float',
+        default: 0.01
+      },
+      {
+        name: 'y',
+        type: 'float',
+        default: 0.01
+      },
+      {
+        name: 'z',
+        type: 'float',
+        default: 0.01
+      },
+    ],
+    glsl: `vec4 dreads(vec2 _st, float volume, float x, float y, float z) {
+      // https://www.shadertoy.com/view/4lGcz1
+      vec3 ps = vec3(volume, 0.0, 10.);
+      vec3 dir = normalize(vec3(_st, 1.0));
+      vec3 color = vec3(0.0, 0.0, 0.0) * length(_st.xy) * sin(time * 10.0);     
+      color += dreadsmarch(ps, dir);
+      return vec4(color, 1.0);
+    }
+    `
+  },
+  circles: {
+    type: 'src',
+    inputs: [
+      {
+        name: 'speed',
+        type: 'float',
+        default: 0.0
+      }
+    ],
+    glsl: `vec4 circles(vec2 _st, float speed) {
+      return vec4(sin(length(_st-0.5)*10.0-time*speed));
+    }
+    `
+  },
 }
