@@ -1504,12 +1504,18 @@ float _noise(vec3 v){
         name: 'mousey',
         type: 'float',
         default: 0.0
+      },
+      {
+        name: 'zoom',
+        type: 'float',
+        default: 0.0
       }
     ],
-    glsl: `vec4 icosphere(vec2 _st, float mousex, float mousey) {
-      vec2 p = -1.0 + 2.0 *_st;
+    glsl: `vec4 icosphere(vec2 _st, float mousex, float mousey, float zoom) {
+      vec2 p = (-1.0 + 2.0 *_st) * (zoom+1.0);
+      p.x*=resolution.x/resolution.y;
       vec2 bp = p+0.5;
-      vec3 ro = vec3(mousex,mousey,3.5);
+      vec3 ro = vec3(mousex/resolution.x,mousey/resolution.y,3.5);
       vec3 rd = normalize(vec3(p,-1.4));      
       vec2 t = iSphere2(ro,rd);
       vec3 pos = ro+rd*t.x;
