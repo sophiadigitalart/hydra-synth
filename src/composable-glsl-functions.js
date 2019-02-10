@@ -1328,7 +1328,7 @@ float _noise(vec3 v){
   calcColor: {
     type: 'util',
     glsl: `vec3 calcColor(vec3 c) {
-      return _rgbToHsv(vec3(c.x * 0.04 + time, 1., 1.));
+      return _rgbToHsv(vec3(c.x * 0.04 , 1., 1.));//+ time*0.0001
     }`
   },
   groundDist: {
@@ -1374,11 +1374,6 @@ float _noise(vec3 v){
     type: 'src',
     inputs: [
       {
-        name: 'volume',
-        type: 'float',
-        default: 0.01
-      },
-      {
         name: 'x',
         type: 'float',
         default: 0.01
@@ -1391,14 +1386,15 @@ float _noise(vec3 v){
       {
         name: 'z',
         type: 'float',
-        default: 0.01
+        default: -10.0
       },
     ],
-    glsl: `vec4 dreads(vec2 _st, float volume, float x, float y, float z) {
+    glsl: `vec4 dreads(vec2 _st, float x, float y, float z) {
       // https://www.shadertoy.com/view/4lGcz1
-      vec3 ps = vec3(volume, 0.0, 10.);
-      vec3 dir = normalize(vec3(_st, 1.0));
-      vec3 color = vec3(0.0, 0.0, 0.0) * length(_st.xy) * sin(time * 10.0);     
+      vec3 ps = vec3( x, y, z);
+      vec2 p = -1.0 + 2.0 *_st;
+      vec3 dir = normalize(vec3(p, 1.0));
+      vec3 color = vec3(0.0, 0.0, 0.0) * length(p.xy) * sin(time * 10.0);     
       color += dreadsmarch(ps, dir);
       return vec4(color, 1.0);
     }
@@ -1414,6 +1410,7 @@ float _noise(vec3 v){
       }
     ],
     glsl: `vec4 circles(vec2 _st, float speed) {
+      // vec2 p = -1.0 + 2.0 *_st;
       return vec4(sin(length(_st-0.5)*10.0-time*speed));
     }
     `
