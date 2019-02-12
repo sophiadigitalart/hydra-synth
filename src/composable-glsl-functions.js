@@ -1087,16 +1087,7 @@ float _noise(vec3 v){
     ],
     glsl: `vec4 smoke(vec2 _st, float zoom) {
       vec2 p = -1.0+2.0*_st;
-      int z = 2;
-      if (zoom<9.) z = 9;
-      if (zoom<8.) z = 8;
-      if (zoom<7.) z = 7;
-      if (zoom<6.) z = 6;
-      if (zoom<5.) z = 5;
-      if (zoom<4.) z = 4;
-      if (zoom<3.) z = 3;
-      if (zoom<2.) z = 2;
-      if (zoom<1.) z = 1;
+      highp int z = int(zoom);
       float w = sin(time+6.5*sqrt(dot(p,p))*cos(p.x));
       float x = cos(atan(p.y,p.x)*float(z) + 1.8*w);
       return vec4(x,x,x,1.);
@@ -1279,28 +1270,17 @@ float _noise(vec3 v){
       float M_2PI = 6.283185307179586;
       float angle = atan(p.y, p.x);
       float radius = sqrt(p.x*p.x + p.y*p.y);
-    
-      //float n = speed;//9.0;
-      float n = 2.;
-      if (speed<9.) n = 9.;
-      if (speed<8.) n = 8.;
-      if (speed<7.) n = 7.;
-      if (speed<6.) n = 6.;
-      if (speed<5.) n = 5.;
-      if (speed<4.) n = 4.;
-      if (speed<3.) n = 3.;
-      if (speed<2.) n = 2.;
-      if (speed<1.) n = 1.;
+      highp int n = int(speed);
       float angle_offset = 5.1*sin(0.3*time);
       float k_amplitude = 0.9*cos(1.2*time);
-      float radius2 = radius + pow(radius, 2.0)*k_amplitude*sin(n*angle + angle_offset);
+      float radius2 = radius + pow(radius, 2.0)*k_amplitude*sin(float(n)*angle + angle_offset);
       float width = 0.05;
       float k_t = -0.04;
       
       float n_inv = 1.0 / float(n);
       vec3 color;
       float modulus = mod((radius2 + k_t*time) / width, 3.0);
-      if(modulus < 1.0) {
+      if (modulus < 1.0) {
         //color = vec3(0.5, 0.0, 0.8);
         color = vec3(red, 0.14, 0.3);
       } else if(modulus < 2.0) {
@@ -1586,6 +1566,7 @@ float _noise(vec3 v){
       }
     ],
     glsl: `vec4 blobs(vec2 _st, float speed) {
+      // https://www.shadertoy.com/view/4slSR4
       vec2 p = -1.0 + 2.0 *_st;
       // fix aspect ratio
       p.x *= resolution.x/resolution.y;
