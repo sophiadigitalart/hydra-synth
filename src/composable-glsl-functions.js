@@ -1393,6 +1393,7 @@ float _noise(vec3 v){
       // https://www.shadertoy.com/view/4lGcz1
       vec3 ps = vec3( x, y, z);
       vec2 p = -1.0 + 2.0 *_st;
+      p.y = p.y - z;
       vec3 dir = normalize(vec3(p, 1.0));
       vec3 color = vec3(0.0, 0.0, 0.0) * length(p.xy) * sin(time * 10.0);     
       color += dreadsmarch(ps, dir);
@@ -1595,6 +1596,38 @@ float _noise(vec3 v){
     }
     `
   },
+  plas: {
+    type: 'util',
+    glsl: `vec4 plas( in vec2 v ) {
+      float c = 0.5 + sin( v.x * 10.0) + cos(sin(time+v.y)*20.);
+      return vec4(sin(c*0.2+cos(time)),c*0.15,cos(c*0.1+time/.4),1.0);
+    }
+    `
+  },
+  plasma: {
+    type: 'src',
+    inputs: [
+      {
+        name: 'fft',
+        type: 'float',
+        default: 0.0
+      }
+    ],
+    glsl: `vec4 plasma(vec2 _st, float fft) {
+      vec2 uv = -1.0 + 2.0 *_st;
+      uv.x *= resolution.x/resolution.y;
+      vec2 m;
+      m.x = atan(uv.x/uv.y)/3.14;
+      m.y = 1./length(uv)*.2;
+      float d = m.y;
+      float f = fft * 10.;
+      m.x += sin(time)*0.1;
+      m.y += time*0.25;
+      vec4 t = plas(m*3.14)/d;
+      return vec4(f+t);
+    }
+    `
+  },
   circles: {
     type: 'src',
     inputs: [
@@ -1606,6 +1639,7 @@ float _noise(vec3 v){
     ],
     glsl: `vec4 circles(vec2 _st, float speed) {
       // vec2 p = -1.0 + 2.0 *_st;
+      // p.x *= resolution.x/resolution.y;
       return vec4(sin(length(_st-0.5)*10.0-time*speed));
     }
     `
