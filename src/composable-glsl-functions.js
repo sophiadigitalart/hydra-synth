@@ -872,9 +872,8 @@ float _noise(vec3 v){
       }
     ],
     glsl: `vec2 modulateHue(vec2 st, vec4 c1, float amount){
-
-            return st + (vec2(c1.g - c1.r, c1.b - c1.g) * amount * 1.0/resolution);
-          }`
+      return st + (vec2(c1.g - c1.r, c1.b - c1.g) * amount * 1.0/resolution);
+    }`
   },
   invert: {
     type: 'color',
@@ -1613,8 +1612,8 @@ float _noise(vec3 v){
   },
   plas: {
     type: 'util',
-    glsl: `vec4 plas( in vec2 v ) {
-      float c = 0.5 + sin( v.x * 10.0) + cos(sin(time+v.y)*20.);
+    glsl: `vec4 plas( in vec2 v, float fft ) {
+      float c = sin( v.x * 1000.0 * fft) + cos(sin(time+v.y)*20.);
       return vec4(sin(c*0.2+cos(time)),c*0.15,cos(c*0.1+time/.4),1.0);
     }
     `
@@ -1635,11 +1634,93 @@ float _noise(vec3 v){
       m.x = atan(uv.x/uv.y)/3.14;
       m.y = 1./length(uv)*.2;
       float d = m.y;
-      float f = fft * 10.;
+      float f = fft;
       m.x += sin(time)*0.1;
       m.y += time*0.25;
-      vec4 t = plas(m*3.14)/d;
+      vec4 t = plas(m*3.14, fft)/d;
       return vec4(f+t);
+    }
+    `
+  },
+  nawak: {
+    type: 'combineCoord',
+    inputs: [
+      {
+        name: 'color',
+        type: 'vec4'
+      }
+    ],
+    glsl: `vec2 nawak(vec2 st, vec4 c1){
+      return vec2( (c1.r+c1.g+c1.b)/3.0 );
+    }`
+  },
+  gainage: {
+    type: 'src',
+    inputs: [
+      {
+        name: 'brightness',
+        type: 'float',
+        default: 0.5
+      }
+    ],
+    glsl: `vec4 gainage(vec2 _st, float brightness) {
+    float x, y, xpos, ypos;
+    float t = time * 10.0;
+    vec3 c = vec3(0.0);
+    xpos = _st.x;
+    ypos = _st.y;
+    x = xpos;
+    for (float i = 0.0; i < 8.0; i += 1.0) {
+        for(float j = 0.0; j < 2.0; j += 1.0){
+            y = ypos
+            + (0.30 * sin(x * 2.000 +( i * 1.5 + j) * 0.4 + t * 0.050)
+               + 0.100 * cos(x * 6.350 + (i  + j) * 0.7 + t * 0.050 * j)
+               + 0.024 * sin(x * 12.35 + ( i + j * 4.0 ) * 0.8 + t * 0.034 * (8.0 *  j))
+               + 0.5);
+            c += vec3(1.0 - pow(clamp(abs(1.0 - y) * 5.0, 0.0,1.0), 0.25));
+        }
+    }
+    c *= mix(
+             mix( vec3(1.4, 0.8, 0.4), vec3(0.5, 0.9, 1.3), xpos)
+             , mix(vec3(0.9, 1.4, 0.4), vec3(1.8, 0.4, 0.3), xpos)
+             ,(sin(t * 0.02) + 1.0) * 0.45
+             ) * brightness;
+    return  vec4(c, 1.0);
+    }
+    `
+  },
+  julia: {
+    type: 'src',
+    inputs: [
+      {
+        name: 'speed',
+        type: 'float',
+        default: 0.0
+      }
+    ],
+    glsl: `vec4 julia(vec2 _st, float speed) {
+      // https://www.shadertoy.com/view/MsXGzr
+      vec2 uv = _st;
+      vec2 cc = 1.1*vec2( 0.5*cos(0.1*time) - 0.25*cos(0.2*time), 
+                            0.5*sin(0.1*time) - 0.25*sin(0.2*time) );
+      vec4 dmin = vec4(1000.0);
+      vec2 z = (-1.0 + 1.0*uv)*vec2(0.6,0.3);
+      for( int i=0; i<16; i++ )
+      {
+          z = cc + vec2( z.x*z.x - z.y*z.y, 2.0*z.x*z.y );
+      z += 0.15*sin(float(i));
+      dmin=min(dmin, vec4(abs(0.0+z.y + 0.2*sin(z.x)), 
+                abs(1.0+z.x + 0.5*sin(z.y)), 
+                dot(z,z),
+                  length( fract(z)-0.2) ) );
+      }
+      vec3 color = vec3( dmin.w );
+      color = mix( color, vec3(0.80,0.40,0.20),     min(1.0,pow(dmin.x*0.25,0.20)) );
+      color = mix( color, vec3(0.12,0.70,0.60),     min(1.0,pow(dmin.y*0.50,0.50)) );
+      color = mix( color, vec3(0.90,0.40,0.20), 1.0-min(1.0,pow(dmin.z*1.00,0.15) ));
+      color = 1.25*color*color;
+      color *= 0.5 + 0.5*pow(4.0*uv.x*(1.0-uv.y)*uv.y*(1.0-uv.y),0.15);
+      return vec4(color,1.0);
     }
     `
   },
