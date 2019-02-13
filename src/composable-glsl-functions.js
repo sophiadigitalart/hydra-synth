@@ -1724,6 +1724,38 @@ float _noise(vec3 v){
     }
     `
   },
+  ovni: {
+    type: 'src',
+    inputs: [
+      {
+        name: 'fft',
+        type: 'float',
+        default: 0.0
+      }
+    ],
+    glsl: `vec4 ovni(vec2 _st, float fft) {
+      // https://www.shadertoy.com/view/MsBSzw
+      vec2 p = -1.0 + 2.0 *_st;
+      p.x *= resolution.x/resolution.y;
+      vec3 c = vec3(0.0);
+      vec2 uv = -1.0 + 2.0 *_st;
+      float wave = fft;
+    
+        for(int i = 1; i<20; i++)
+        {
+            float t = 2.*3.14*float(i)/20.* (time*.9);
+            float x = sin(t)*1.8*smoothstep( 0.0, 0.15, abs(wave - uv.y));
+            float y = sin(.5*t) *smoothstep( 0.0, 0.15, abs(wave - uv.y));
+            y*=.5;
+            vec2 o = .4*vec2(x*cos(time*.5),y*sin(time*.3));
+            float red = fract(t);
+            float green = 1.-red;
+            c+=0.016/(length(p-o))*vec3(red,green,sin(time));
+        }
+      return vec4(c,1.0);
+    }
+    `
+  },
   circles: {
     type: 'src',
     inputs: [
