@@ -1261,6 +1261,7 @@ float _noise(vec3 v){
       float width = 0.05;
       float k_t = -0.04;
       
+      
       float n_inv = 1.0 / float(n);
       vec3 color;
       float modulus = mod((radius2 + k_t*time) / width, 3.0);
@@ -1488,14 +1489,13 @@ float _noise(vec3 v){
       {
         name: 'zoom',
         type: 'float',
-        default: 0.0
+        default: 0.1
       }
     ],
-    glsl: `vec4 icosphere(vec2 _st, float mousex, float mousey, float zoom) {
-      vec2 p = (-1.0 + 2.0 *_st) * (zoom+1.0);
+    glsl: `vec4 icosphere(vec2 _st, float zoom, float mousex, float mousey) {
+      vec2 p = (-1.0 + 2.0 *_st) * (-zoom+1.40);
       p.x*=resolution.x/resolution.y;
-      vec2 bp = p+0.5;
-      vec3 ro = vec3(mousex/resolution.x,mousey/resolution.y,3.5);
+      vec3 ro = vec3(mousex/resolution.x,mousey/resolution.y,3.6+sin(time/10.));
       vec3 rd = normalize(vec3(p,-1.4));      
       vec2 t = iSphere2(ro,rd);
       vec3 pos = ro+rd*t.x;
@@ -1516,7 +1516,6 @@ float _noise(vec3 v){
       // deform the sphere
       d1 += 0.1 * sin( 10.0 * p.x + time );
       //d1 += 0.1 * sin( 10.0 * p.x ) * sin( 10.0 * p.y + time ) * sin( 10.0 * p.z );
-
       // add a floor (plane)
       float d2 = p.y + 1.0;
       // no blending
@@ -1525,6 +1524,14 @@ float _noise(vec3 v){
       float k = 0.20;
       float h = clamp( 0.5 + 0.5 * ( d1 - d2 ) / k, 0.0, 1.0 );
       return mix( d1, d2, h ) - k*h*(1.0-h);	
+    }
+    `
+  },
+  map2: {
+    type: 'util',
+    glsl: `float map2(in vec3 p) {
+      vec3 q = p*2.+time;
+      return length(p+vec3(sin(time*0.7)))*log(length(p)+1.) + sin(q.x+sin(q.z+sin(q.y)))*0.5 - 1.;	
     }
     `
   },
@@ -1738,6 +1745,51 @@ float _noise(vec3 v){
             c+=0.016/(length(p-o))*vec3(red,green,sin(time));
         }
       return vec4(c,1.0);
+    }
+    `
+  },
+  neon: {
+    type: 'src',
+    inputs: [
+      {
+        name: 'speed',
+        type: 'float',
+        default: 0.0
+      }
+    ],
+    glsl: `vec4 neon(vec2 _st, float speed) {
+      vec2 v = -1.0 + 2.0 *_st;
+      // p.x *= resolution.x/resolution.y;
+	    vec3 col = (vec3(fract(v.x + time*1.8),fract(-0.5*v.x+0.8*v.y + time*0.09),fract(-0.5*v.x-0.86*v.y + time*0.08))-0.5);
+      col = 1.0-normalize(col*col);
+      return vec4(col, 1.0);
+    }
+    `
+  },
+  ether: {
+    type: 'src',
+    inputs: [
+      {
+        name: 'zoom',
+        type: 'float',
+        default: 0.1
+      }
+    ],
+    glsl: `vec4 ether(vec2 _st, float zoom) {
+      // https://www.shadertoy.com/view/MsjSW3
+      vec2 p = (-1.0 + 2.0 *_st) / (zoom+1.0);
+      p.x *= resolution.x/resolution.y;
+      vec3 cl = vec3(0.);
+      float d = 2.5;
+      for(int i=0; i<=5; i++)	{
+        vec3 p = vec3(0,0,5.) + normalize(vec3(p, -1.))*d;
+        float rz = map2(p);
+		    float f =  clamp((rz - map2(p+.1))*0.5, -.1, 1. );
+        vec3 l = vec3(0.1,0.3,.4) + vec3(5., 2.5, 3.)*f;
+        cl = cl*l + (1.-smoothstep(0., 2.5, rz))*.7*l;
+        d += min(rz, 1.);
+      }
+      return  vec4(cl, 1.);
     }
     `
   },
