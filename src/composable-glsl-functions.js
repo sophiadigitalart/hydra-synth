@@ -1406,7 +1406,7 @@ float _noise(vec3 v){
     ],
     glsl: `vec4 dreads(vec2 _st, float x, float y, float z) {
       // https://www.shadertoy.com/view/4lGcz1
-      vec3 ps = vec3( x, y, z);
+      vec3 ps = vec3( x, y, z); 
       vec2 p = -1.0 + 2.0 *_st;
       p.y = p.y - z;
       vec3 dir = normalize(vec3(p, 1.0));
