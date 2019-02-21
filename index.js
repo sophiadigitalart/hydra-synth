@@ -50,7 +50,7 @@ class HydraSynth {
       this.saveFrame = true
     }
     window.wssend = () => {
-      this.sendFrame = true
+      this.sendFrame = !this.sendFrame
     }
     if (enableStreamCapture) {
       this.captureStream = this.canvas.captureStream(25)
