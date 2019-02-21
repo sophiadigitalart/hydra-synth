@@ -34,6 +34,8 @@ class HydraSynth {
 
     // boolean to store when to save screenshot
     this.saveFrame = false
+    // boolean to store when to send frame via websocket
+    this.sendFrame = false
 
     // if stream capture is enabled, this object contains the capture stream
     this.captureStream = null
@@ -43,11 +45,13 @@ class HydraSynth {
     this._initOutputs(numOutputs)
     this._initSources(numSources)
     this._generateGlslTransforms()
-
+    
     window.screencap = () => {
       this.saveFrame = true
     }
-
+    window.wssend = () => {
+      this.sendFrame = true
+    }
     if (enableStreamCapture) {
       this.captureStream = this.canvas.captureStream(25)
 
@@ -95,6 +99,11 @@ class HydraSynth {
       document.body.removeChild(a);
       window.URL.revokeObjectURL(a.href);
     }, 300);
+  }
+
+  canvasToWs (callback) {
+      var base64Str = this.canvas.toDataURL('image/jpeg');
+      if (window.socket) window.socket.emit('canvas', base64Str);    
   }
 
   _initAudio () {
@@ -327,6 +336,10 @@ class HydraSynth {
     if(this.saveFrame === true) {
       this.canvasToImage()
       this.saveFrame = false
+    }
+    if(this.sendFrame === true) {
+      this.canvasToWs()
+      //this.sendFrame = false
     }
   }
 
