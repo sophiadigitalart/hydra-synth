@@ -275,13 +275,20 @@ Generator.prototype.glsl = function (_output) {
     pass.uniforms.forEach((uniform) => { uniforms[uniform.name] = uniform.value })
     if(pass.hasOwnProperty('transform')){
     //  console.log(" rendering pass", pass)
-
+      if (window.socket) {
+        try {
+          window.socket.emit('frag', this.compile(pass));
+        } catch (e) {
+          // handle error (server not connected for example)
+          console.log(" websocket error", JSON.stringify(e))
+        }
+      } 
       return {
         frag: this.compile(pass),
         uniforms: Object.assign(output.uniforms, uniforms)
       }
     } else {
-    //  console.log(" not rendering pass", pass)
+      console.log(" not rendering pass", pass)
       return {
         frag: pass.frag,
         uniforms:  Object.assign(output.uniforms, uniforms)
