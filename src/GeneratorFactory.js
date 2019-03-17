@@ -274,7 +274,7 @@ Generator.prototype.glsl = function (_output) {
     var uniforms = {}
     pass.uniforms.forEach((uniform) => { uniforms[uniform.name] = uniform.value })
     if(pass.hasOwnProperty('transform')){
-    //  console.log(" rendering pass", pass)
+      //  console.log(" rendering pass", pass)
       if (window.socket) {
         try {
           window.socket.send(JSON.stringify({event:'frag', message: this.compile(pass)}));
