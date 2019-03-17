@@ -36,6 +36,8 @@ class HydraSynth {
     this.saveFrame = false
     // boolean to store when to send frame via websocket
     this.sendFrame = false
+    // boolean to store if webrtc is setup
+    this.webrtcsetup = false
 
     // if stream capture is enabled, this object contains the capture stream
     this.captureStream = null

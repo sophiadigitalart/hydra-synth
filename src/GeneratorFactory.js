@@ -224,7 +224,7 @@ Generator.prototype.compile = function (pass) {
   void main () {
     vec4 c = vec4(1, 0, 0, 1);
     //vec2 st = uv;
-    vec2 st = gl_FragCoord.xy/resolution;
+    vec2 st = gl_FragCoord.xy/resolution.xy;
     gl_FragColor = ${pass.transform('st')};
   }
   `
@@ -267,92 +267,45 @@ Generator.prototype.compileRenderPass = function (pass) {
   return frag
 }
 
-Generator.prototype.glsl = function () {
-//  console.log(this.compile())
-}
-
-// functions for testing multiple render passes
-// Generator.prototype.fragPass = function () {
-// return `
-//   precision mediump float;
-//   uniform float time;
-//   uniform vec2 resolution;
-//   uniform sampler2D prevBuffer;
-//   varying vec2 uv;
-//
-//   void main () {
-//     vec4 c = vec4(1, 0, 0, 1);
-//     //vec2 st = uv;
-//     vec2 st = gl_FragCoord.xy/resolution;
-//     vec4 col = texture2D(prevBuffer, fract(st));
-//     gl_FragColor = vec4(col.r, 1.0, col.b, col.a);
-//   }
-//   `
-// }
-//
-// Generator.prototype.fragPass2 = function () {
-// return `
-//   precision mediump float;
-//   uniform float time;
-//   uniform vec2 resolution;
-//   uniform sampler2D prevBuffer;
-//   varying vec2 uv;
-//
-//   void main () {
-//     vec4 c = vec4(1, 0, 0, 1);
-//     //vec2 st = uv;
-//     vec2 st = gl_FragCoord.xy/resolution;
-//     vec4 col = texture2D(prevBuffer, fract(st));
-//     gl_FragColor = vec4(col.r - 1.0, col.g, col.b, col.a);
-//   }
-//   `
-// }
-
-Generator.prototype.out = function (_output) {
-//  console.log('UNIFORMS', this.uniforms, output)
+Generator.prototype.glsl = function (_output) {
   var output = _output || this.defaultOutput
-  // var pass = {
-  //   glsl: renderPassFunctions['edges'].glsl,
-  //   uniforms: []
-  // }
-  // var frag = this.compileRenderPass(pass)
-  // console.log('shader', frag)
-  //
-  // this.passes.push({
-  //   frag: frag,
-  //   uniforms: pass.uniforms
-  // })
-  // this.passes.push({
-  //   frag: this.fragPass2(),
-  //   uniforms: []
-  // })
+
   var passes = this.passes.map((pass) => {
     var uniforms = {}
     pass.uniforms.forEach((uniform) => { uniforms[uniform.name] = uniform.value })
     if(pass.hasOwnProperty('transform')){
-    //  console.log(" rendering pass", pass)
-
+      //  console.log(" rendering pass", pass)
+      if (window.socket) {
+        try {
+          window.socket.send(JSON.stringify({event:'frag', message: this.compile(pass)}));
+        } catch (e) {
+          // handle error (server not connected for example)
+          console.log(" websocket error", JSON.stringify(e))
+        }
+      }
       return {
         frag: this.compile(pass),
         uniforms: Object.assign(output.uniforms, uniforms)
       }
     } else {
-    //  console.log(" not rendering pass", pass)
+      console.log(" not rendering pass", pass)
       return {
         frag: pass.frag,
         uniforms:  Object.assign(output.uniforms, uniforms)
       }
     }
   })
+  return passes
+}
 
-  // console.log("FRAG", frag)
-  output.renderPasses(passes)
-  //var frag = this.compile(this.passes[this.passes.length-1])
-  //output.frag = frag
-/*  var uniformObj = {}
-  this.uniforms.forEach((uniform) => { uniformObj[uniform.name] = uniform.value })
-  output.uniforms = Object.assign(output.uniforms, uniformObj)*/
-//  output.render()
+
+
+Generator.prototype.out = function (_output) {
+//  console.log('UNIFORMS', this.uniforms, output)
+  var output = _output || this.defaultOutput
+
+  output.renderPasses(this.glsl(output))
+
 }
 
 module.exports = GeneratorFactory

@@ -862,7 +862,7 @@ float _noise(vec3 v){
       }
     ],
     glsl: `vec2 modulateHue(vec2 st, vec4 c1, float amount){
-      return st + (vec2(c1.g - c1.r, c1.b - c1.g) * amount * 1.0/resolution);
+      return st + (vec2(c1.g - c1.r, c1.b - c1.g) * amount * 1.0/resolution.xy);
     }`
   },
   invert: {
@@ -1750,16 +1750,10 @@ float _noise(vec3 v){
   },
   neon: {
     type: 'src',
-    inputs: [
-      {
-        name: 'speed',
-        type: 'float',
-        default: 0.0
-      }
+    inputs: [  
     ],
-    glsl: `vec4 neon(vec2 _st, float speed) {
+    glsl: `vec4 neon(vec2 _st) {
       vec2 v = -1.0 + 2.0 *_st;
-      // p.x *= resolution.x/resolution.y;
 	    vec3 col = (vec3(fract(v.x + time*1.8),fract(-0.5*v.x+0.8*v.y + time*0.09),fract(-0.5*v.x-0.86*v.y + time*0.08))-0.5);
       col = 1.0-normalize(col*col);
       return vec4(col, 1.0);
