@@ -1374,26 +1374,26 @@ float _noise(vec3 v){
     type: 'src',
     inputs: [
       {
-        name: 'x',
+        name: 'iMouseX',
         type: 'float',
         default: 0.01
       },
       {
-        name: 'y',
+        name: 'iMouseY',
         type: 'float',
         default: 0.01
       },
       {
-        name: 'z',
+        name: 'iMouseZ',
         type: 'float',
         default: -10.0
       },
     ],
-    glsl: `vec4 dreads(vec2 _st, float x, float y, float z) {
+    glsl: `vec4 dreads(vec2 _st, float iMouseX, float iMouseY, float iMouseZ) {
       // https://www.shadertoy.com/view/4lGcz1
-      vec3 ps = vec3( x, y, z);
+      vec3 ps = vec3( iMouseX, iMouseY, iMouseZ);
       vec2 p = -1.0 + 2.0 *_st;
-      p.y = p.y - z;
+      p.y = p.y - iMouseZ;
       vec3 dir = normalize(vec3(p, 1.0));
       vec3 color = vec3(0.0, 0.0, 0.0) * length(p.xy) * sin(time * 10.0);     
       color += dreadsmarch(ps, dir);
