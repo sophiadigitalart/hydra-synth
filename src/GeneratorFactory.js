@@ -275,9 +275,18 @@ Generator.prototype.glsl = function (_output) {
     pass.uniforms.forEach((uniform) => { uniforms[uniform.name] = uniform.value })
     if(pass.hasOwnProperty('transform')){
       //  console.log(" rendering pass", pass)
+      /*if (window.socket) {
+        try {
+          window.socket.send(JSON.stringify({event:'frag', message: this.compile(pass)}));
+        } catch (e) {
+          // handle error (server not connected for example)
+          console.log(" websocket error", JSON.stringify(e))
+        }
+      } */
       if (window.socket) {
         try {
           window.socket.send(JSON.stringify({event:'frag', message: this.compile(pass)}));
+          window.socket.send(JSON.stringify({event:'hydra', message: JSON.stringify(pass) }));
         } catch (e) {
           // handle error (server not connected for example)
           console.log(" websocket error", JSON.stringify(e))

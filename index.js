@@ -56,7 +56,7 @@ class HydraSynth {
     }
     // websocket begin
     let peerConn = null;
-    window.socket = new WebSocket('ws://127.0.0.1:8088');
+    /*window.socket = new WebSocket('ws://127.0.0.1:8088');
     window.socket.onmessage = function(evt) {
       var messageData = JSON.parse(evt.data);
       if (messageData.sdp) {
@@ -67,7 +67,42 @@ class HydraSynth {
       } else {
         console.log('Received from remote peer ' + evt.data);
       }
-    };
+    }; */
+    
+    window.ws = (function (uri) {
+      console.log('ws init')
+      ws = new WebSocket(uri);
+      ws.onmessage = function(evt) {
+        var messageData = JSON.parse(evt.data);
+        if (messageData.sdp) {
+          console.log('Received SDP from remote peer');
+          peerConn.setRemoteDescription(new RTCSessionDescription(messageData.sdp));
+        } else if (messageData.candidate) {
+          console.log('Received ICECandidate from remote peer ' + messageData.candidate);
+        } else {
+          console.log('Received from remote peer ' + evt.data);
+        }
+        var customEvt = new CustomEvent(messageData.event);
+        customEvt.data = messageData.message;
+        ws.dispatchEvent(customEvt);
+      };
+      this.emit = function(evt, data) {
+        ws.send(JSON.stringify({event:evt, message: data}));
+      };
+      this.send = function(data) {
+        ws.send(data);
+      };
+      this.on = function(evt, func) {
+        ws.addEventListener(evt, func);
+      };
+      ws.onerror = function(e) {console.log('error: ' + e)};
+      ws.onopen = function(evt) {console.log('Socket opened')};
+      ws.onclose = function(evt) {console.log('Socket closed')};
+    });
+    window.socket = new ws('ws://turbulens.fr/ws/');
+    //window.socket = new ws('ws://127.0.0.1:8088');
+  
+    
     // websocket end
     // webrtc begin
     function onIceCandidateHandler(pc, event) {
@@ -170,6 +205,7 @@ class HydraSynth {
 
   canvasToWs (callback) {
       var base64Str = this.canvas.toDataURL('image/jpeg');
+      console.log('canvasToWs:' + window.socket);
       if (window.socket) window.socket.emit('canvas', base64Str);    
   }
 
