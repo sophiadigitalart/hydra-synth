@@ -43,12 +43,15 @@ function generateGlsl (inputs) {
 // returns an object that contains the type and value of each argument
 // to do: add much more type checking, validation, and transformation to this part
 function formatArguments (userArgs, defaultArgs) {
+      /* BL
+      console.log('counter before reset' + counter.get());
+      counter.reset();
+      console.log('counter after reset' + counter.get());*/
   return defaultArgs.map((input, index) => {
     var typedArg = {}
 
     // if there is a user input at a certain index, create a uniform for this variable so that the value is passed in on each render pass
     // to do (possibly): check whether this is a function in order to only use uniforms when needed
-
     counter.increment()
     typedArg.name = input.name + counter.get()
     typedArg.isUniform = true
@@ -108,7 +111,6 @@ var GeneratorFactory = function (defaultOutput) {
 
   Object.keys(glslTransforms).forEach((method) => {
     const transform = glslTransforms[method]
-
     // if type is a source, create a new global generator function that inherits from Generator object
     if (transform.type === 'src') {
       self.functions[method] = (...args) => {

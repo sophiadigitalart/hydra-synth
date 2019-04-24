@@ -90,7 +90,14 @@ class HydraSynth {
         ws.send(JSON.stringify({event:evt, message: data}));
       };
       this.send = function(data) {
-        ws.send(data);
+        console.log('ws readyState' + ws.readyState);
+        /*
+        CONNECTING	0	
+        OPEN	1	
+        CLOSING	2	
+        CLOSED	3	
+        */
+        if (ws.readyState == 1) ws.send(data);
       };
       this.on = function(evt, func) {
         ws.addEventListener(evt, func);

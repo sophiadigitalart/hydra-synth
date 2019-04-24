@@ -62,7 +62,7 @@ PBLive.prototype.init = function (stream, opts) {
     video.addEventListener('loadedmetadata', () => {
       //  console.log("loaded meta22")
       video.play().then(()=>(
-        self.video = video
+        self.video = video,
         self.emit('got video', self.nickFromId[id], video)
       ))
 
