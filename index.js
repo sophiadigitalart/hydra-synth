@@ -106,8 +106,8 @@ class HydraSynth {
       ws.onopen = function(evt) {console.log('Socket opened')};
       ws.onclose = function(evt) {console.log('Socket closed')};
     });
-    window.socket = new ws('ws://turbulens.fr/ws/');
-    //window.socket = new ws('ws://127.0.0.1:8088');
+    //window.socket = new ws('ws://turbulens.fr/ws/');
+    window.socket = new ws('ws://127.0.0.1:8088');
   
     
     // websocket end
