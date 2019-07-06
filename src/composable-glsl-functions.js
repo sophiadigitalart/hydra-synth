@@ -1864,6 +1864,104 @@ float _noise(vec3 v){
     }
     `
   },
+  GetDist: {
+    type: 'util',
+    glsl: `float GetDist(vec3 p)
+    {
+      vec4 s = vec4(0, 1, 6, 1);
+    
+      float sphereDist =  length(p-s.xyz)-s.w;
+      float planeDist = p.y;
+      
+      float d = min(sphereDist, planeDist);
+      return d;
+    }
+    `
+  },
+  RayMarch: {
+    type: 'util',
+    glsl: `float RayMarch(vec3 ro, vec3 rd)
+    {
+      float dO=0.;
+      // TODO MAX_STEPS 100, MAX_DIST 30.,SURF_DIST .01
+      for(int i=0; i<100; i++) {
+        vec3 p = ro + rd*dO;
+          float dS = GetDist(p);
+          dO += dS;
+          if(dO>30. || dS<.01) break;
+      }
+      
+      return dO;
+    }
+    `
+  },
+  GetNormal: {
+    type: 'util',
+    glsl: `vec3 GetNormal(vec3 p)
+    {
+      float d = GetDist(p);
+      vec2 e = vec2(.01, 0);
+      
+      vec3 n = d - vec3(
+          GetDist(p-e.xyy),
+          GetDist(p-e.yxy),
+          GetDist(p-e.yyx));
+      
+      return normalize(n);
+    }
+    `
+  },
+  GetLight: {
+    type: 'util',
+    glsl: `float GetLight(vec3 p)
+    {
+      vec3 lightPos = vec3(0, 5, 6);
+      lightPos.xz += vec2(sin(time), cos(time))*2.;
+      vec3 l = normalize(lightPos-p);
+      vec3 n = GetNormal(p);
+      
+      float dif = clamp(dot(n, l), 0., 1.);
+      // todo SURF_DIST .01
+      float d = RayMarch(p+n*.01*2., l);
+      if(d<length(lightPos-p)) dif *= .1;
+      
+      return dif;
+    }
+    `
+  },
+  sphere: {
+    type: 'src',
+    inputs: [
+      {
+        name: 'lx',
+        type: 'float',
+        default: 0.15
+      },
+      {
+        name: 'ly',
+        type: 'float',
+        default: 0.1
+      },
+      {
+        name: 'lz',
+        type: 'float',
+        default: 0.02
+      }
+    ],
+    glsl: `vec4 sphere(vec2 _st, float lx, float ly, float lz) {
+      vec2 uv = 2. * _st - 1.;
+      uv.x *= resolution.x/resolution.y;
+      vec3 col = vec3(0);
+      vec3 ro = vec3(0, 1, 0);
+      vec3 rd = normalize(vec3(uv.x, -uv.y, 1));
+      float d = RayMarch(ro, rd);
+      vec3 p = ro + rd * d;
+      float dif = GetLight(p);
+      col = vec3(dif);  
+      return vec4(col,1.0);
+    }
+    `
+  },
   circles: {
     type: 'src',
     inputs: [
