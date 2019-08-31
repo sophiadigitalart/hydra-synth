@@ -307,12 +307,22 @@ float _noise(vec3 v){
         name: 'yMult',
         type: 'float',
         default: 1.0
+      },
+      {
+        name: 'offsetX',
+        type: 'float',
+        default: 0.5
+      },
+      {
+        name: 'offsetY',
+        type: 'float',
+        default: 0.5
       }
     ],
-    glsl: `vec2 scale(vec2 st, float amount, float xMult, float yMult){
-      vec2 xy = st - vec2(0.5);
+    glsl: `vec2 scale(vec2 st, float amount, float xMult, float yMult, float offsetX, float offsetY){
+      vec2 xy = st - vec2(offsetX, offsetY);
       xy*=(1.0/vec2(amount*xMult, amount*yMult));
-      xy+=vec2(0.5);
+      xy+=vec2(offsetX, offsetY);
       return xy;
     }
     `
@@ -608,7 +618,7 @@ float _noise(vec3 v){
     ],
     glsl: `vec2 scrollX(vec2 st, float amount, float speed){
       st.x += amount + time*speed;
-      return fract(st);
+      return st;
     }`
   },
   modulateScrollX: {
@@ -631,7 +641,7 @@ float _noise(vec3 v){
     ],
     glsl: `vec2 modulateScrollX(vec2 st, vec4 c1, float amount, float speed){
       st.x += c1.r*amount + time*speed;
-      return fract(st);
+      return st;
     }`
   },
   scrollY: {
@@ -650,7 +660,7 @@ float _noise(vec3 v){
     ],
     glsl: `vec2 scrollY(vec2 st, float amount, float speed){
       st.y += amount + time*speed;
-      return fract(st);
+      return st;
     }`
   },
   modulateScrollY: {
@@ -673,7 +683,7 @@ float _noise(vec3 v){
     ],
     glsl: `vec2 modulateScrollY(vec2 st, vec4 c1, float amount, float speed){
       st.y += c1.r*amount + time*speed;
-      return fract(st);
+      return st;
     }`
   },
   add: {
@@ -862,8 +872,9 @@ float _noise(vec3 v){
       }
     ],
     glsl: `vec2 modulateHue(vec2 st, vec4 c1, float amount){
-      return st + (vec2(c1.g - c1.r, c1.b - c1.g) * amount * 1.0/resolution.xy);
-    }`
+
+            return st + (vec2(c1.g - c1.r, c1.b - c1.g) * amount * 1.0/resolution.xy);
+          }`
   },
   invert: {
     type: 'color',
@@ -907,13 +918,6 @@ float _noise(vec3 v){
     }
     `
   },
-  luminance: {
-    type: 'util',
-    glsl: `float luminance(vec3 rgb){
-      const vec3 W = vec3(0.2125, 0.7154, 0.0721);
-      return dot(rgb, W);
-    }`
-  },
   mask: {
     type: 'combine',
     inputs: [
@@ -923,7 +927,7 @@ float _noise(vec3 v){
       }
     ],
     glsl: `vec4 mask(vec4 c0, vec4 c1){
-      float a = luminance(c1.rgb);
+      float a = _luminance(c1.rgb);
       return vec4(c0.rgb*a, a);
     }`
   },
@@ -942,7 +946,7 @@ float _noise(vec3 v){
       }
     ],
     glsl: `vec4 luma(vec4 c0, float threshold, float tolerance){
-      float a = smoothstep(threshold-tolerance, threshold+tolerance, luminance(c0.rgb));
+      float a = smoothstep(threshold-tolerance, threshold+tolerance, _luminance(c0.rgb));
       return vec4(c0.rgb*a, a);
     }`
   },
@@ -960,7 +964,7 @@ float _noise(vec3 v){
       }
     ],
     glsl: `vec4 thresh(vec4 c0, float threshold, float tolerance){
-      return vec4(vec3(smoothstep(threshold-tolerance, threshold+tolerance, luminance(c0.rgb))), c0.a);
+      return vec4(vec3(smoothstep(threshold-tolerance, threshold+tolerance, _luminance(c0.rgb))), c0.a);
     }`
   },
   color: {
@@ -980,16 +984,21 @@ float _noise(vec3 v){
         name: 'b',
         type: 'float',
         default: 1.0
+      },
+      {
+        name: 'a',
+        type: 'float',
+        default: 1.0
       }
     ],
     notes: 'https://www.youtube.com/watch?v=FpOEtm9aX0M',
-    glsl: `vec4 color(vec4 c0, float _r, float _g, float _b){
-      vec3 c = vec3(_r, _g, _b);
-      vec3 pos = step(0.0, c); // detect whether negative
+    glsl: `vec4 color(vec4 c0, float _r, float _g, float _b, float _a){
+      vec4 c = vec4(_r, _g, _b, _a);
+      vec4 pos = step(0.0, c); // detect whether negative
 
       // if > 0, return r * c0
       // if < 0 return (1.0-r) * c0
-      return vec4(mix((1.0-c0.rgb)*abs(c), c*c0.rgb, pos), c0.a);
+      return vec4(mix((1.0-c0)*abs(c), c*c0, pos));
     }`
   },
   _rgbToHsv: {
@@ -1060,6 +1069,16 @@ float _noise(vec3 v){
       return vec4(c, c0.a);
     }`
   },
+prev: {
+    type: 'src',
+    notes: 'renders previous buffer',
+    inputs: [],
+    glsl: `vec4 prev(vec2 _st) {
+      return texture2D(prevBuffer, fract(_st));
+    }
+    `
+  },
+
   smoke: {
     type: 'src',
     inputs: [
@@ -1958,6 +1977,11 @@ float _noise(vec3 v){
       vec3 p = ro + rd * d;
       float dif = GetLight(p);
       col = vec3(dif);  
+      if ( d > 0.5) {
+        col *= vec3(0.8, 0.7, 10.2);
+      } else {
+        col *= vec3(0.8, 0.2, 0.02);
+      }
       return vec4(col,1.0);
     }
     `
