@@ -1,16 +1,12 @@
 const Output = require('./src/output.js')
 const loop = require('raf-loop')
 const Source = require('./src/hydra-source.js')
-//const GeneratorFactory = require('./src/GeneratorFactory.js')
-
-//const RenderPasses = require('./RenderPasses.js')
+const GeneratorFactory = require('./src/GeneratorFactory.js')
+const getUserMedia = require('getusermedia')
 const mouse = require('mouse-change')()
 const Audio = require('./src/audio.js')
 const VidRecorder = require('./src/video-recorder.js')
 
-const synth = require('./src/create-synth.js')
-
-window.synth = synth
 // to do: add ability to pass in certain uniforms and transforms
 class HydraSynth {
 
@@ -51,8 +47,7 @@ class HydraSynth {
     this._initOutputs(numOutputs)
     this._initSources(numSources)
     this._generateGlslTransforms()
-  // this._generateRenderPasses()
-
+    
     window.screencap = () => {
       this.saveFrame = true
     }
@@ -263,7 +258,7 @@ class HydraSynth {
 
     this.renderAll = this.regl({
       frag: `
-      precision highp float;
+      precision mediump float;
       varying vec2 uv;
       uniform sampler2D tex0;
       uniform sampler2D tex1;
@@ -291,7 +286,7 @@ class HydraSynth {
       }
       `,
       vert: `
-      precision highp float;
+      precision mediump float;
       attribute vec2 position;
       varying vec2 uv;
 
@@ -318,7 +313,7 @@ class HydraSynth {
 
     this.renderFbo = this.regl({
       frag: `
-      precision highp float;
+      precision mediump float;
       varying vec2 uv;
       uniform vec2 resolution;
       uniform sampler2D tex0;
@@ -328,7 +323,7 @@ class HydraSynth {
       }
       `,
       vert: `
-      precision highp float;
+      precision mediump float;
       attribute vec2 position;
       varying vec2 uv;
 
@@ -356,7 +351,7 @@ class HydraSynth {
     const self = this
     this.o = (Array(numOutputs)).fill().map((el, index) => {
       var o = new Output({regl: this.regl, width: this.width, height: this.height})
-    //  o.render()
+      o.render()
       o.id = index
       if (self.makeGlobal) window['o' + index] = o
       return o
@@ -387,37 +382,16 @@ class HydraSynth {
   }
 
   _generateGlslTransforms () {
-    // const self = this
-    // const gen = new GeneratorFactory(this.o[0])
-    // window.generator = gen
-    // Object.keys(gen.functions).forEach((key)=>{
-    //   self[key] = gen.functions[key]
-    //   if(self.makeGlobal === true) {
-    //     window[key] = gen.functions[key]
-    //   }
-    // })
-
-    var functions = synth.init(this.o[0])
-   //console.log('functions', functions)
-    // Object.keys(functions).forEach((key)=>{
-    //   self[key] = functions[key]
-    //   if(self.makeGlobal === true) {
-    //     window[key] = functions[key]
-    //   }
-    // })
+    const self = this
+    const gen = new GeneratorFactory(this.o[0])
+    window.generator = gen
+    Object.keys(gen.functions).forEach((key)=>{
+      self[key] = gen.functions[key]
+      if(self.makeGlobal === true) {
+        window[key] = gen.functions[key]
+      }
+    })
   }
-
-  // _generateRenderPasses () {
-  //     const self = this
-  //     const gen = new RenderPasses({ regl: this.regl, width: this.width, height: this.height})
-  //   //  window.generator = gen
-  //     Object.keys(gen.functions).forEach((key)=>{
-  //       self[key] = gen.functions[key]
-  //       if(self.makeGlobal === true) {
-  //         window[key] = gen.functions[key]
-  //       }
-  //     })
-  // }
 
   render (output) {
     if (output) {
