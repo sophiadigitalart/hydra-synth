@@ -2060,6 +2060,138 @@ float _noise(vec3 v){
     }
     `
   },
+  fluxfuzz: {
+    type: 'util',
+    glsl: `float fluxfuzz( vec3 p, float t ) {
+      float f = 0.0;
+      float a  = atan(p.y,p.x);
+      float d = length(p);
+      
+      //p.xy *= mat2(cos(a+t*.1)*d,sin(a)*d,-sin(a)*d,cos(a+t*.1)*d);
+      
+      a+=sin(d+t)*.3;
+      p.x = cos(a)*d;
+      p.y = sin(a)*d;
+      f+=length(sin(p+t));
+      f = sin(f*length(p.xy)+t)*.5+.5;
+      return f;
+    }
+    `
+  },
+  flux: {
+    type: 'src',
+    inputs: [
+      {
+        name: 'iSteps',
+        type: 'float',
+        default: 10.0
+      }
+    ],
+    glsl: `vec4 flux(vec2 _st, float iSteps) {
+      vec2 uv = -1.0 + 2.0 *_st;
+      uv.x *= resolution.x/resolution.y;
+      float t = time;
+      vec4 c = vec4(1.0);
+      float f = 0.0;
+      float d = length(uv);
+      float a = atan(uv.y,uv.x);
+      
+      for(float i = 0.0; i<10.0; i++){
+        f += fluxfuzz(vec3(uv.x,uv.y,i*0.7),t); 
+      }
+      c.r = f;
+      
+      f=0.0;
+      for(float i = 0.0; i<11.0; i++){
+        f += fluxfuzz(vec3(uv.x,uv.y,i*0.7),t); 
+      }
+      c.g = f;
+      
+      f= 0.0;
+      for(float i = 0.0; i<12.0; i++){
+        f += fluxfuzz(vec3(uv.x,uv.y,i*0.7),t); 
+      }
+      //c.b = (f/iSteps);
+      
+      c.rgb = sin(c.rgb+t-d)*.5+.5;
+      c.rgb *= 1.0-d*.08;
+      c.a =1.0;
+      return c;
+    }
+    `
+  },
+
+
+makem2: {
+  type: 'util',
+  glsl: `mat2 makem2(in float theta) {
+    float c = cos(theta);
+    float s = sin(theta);
+    return mat2(c,-s,s,c);
+  }
+  `
+},
+naefbm: {
+  type: 'util',
+  glsl: `float naefbm( vec2 p ) {
+    float z=2.;
+float rz = 0.;
+vec2 bp = p;
+for (float i= 1.;i < 6.;i++ )
+{
+  //TODOrz+= abs((noise(p)-0.5)*2.)/z;
+  rz+= abs(-0.5*2.)/z;
+  z = z*2.;
+  p = p*2.;
+}
+return rz;
+  }
+  `
+},
+naecirc: {
+    type: 'util',
+    glsl: `float naecirc( vec2 p ) {
+      float r = length(p);
+	r = log(sqrt(r));
+	return abs(mod(r*4.,6.2831853)-3.14)*3.+.2;
+    }
+    `
+  },
+  btnae: {
+    type: 'src',
+    inputs: [
+      {
+        name: 'iSteps',
+        type: 'float',
+        default: 10.0
+      }
+    ],
+    glsl: `vec4 btnae(vec2 _st, float iSteps) {
+      vec2 uv = -1.0 + 2.0 *_st;
+      uv.x *= resolution.x/resolution.y;
+      uv*=4.;
+	
+      //get two rotated fbm calls and displace the domain
+      vec2 p2 = uv*.7;
+      vec2 basis = vec2(naefbm(p2-time*1.6),naefbm(p2+time*1.7));
+      basis = (basis-.5)*.2;
+      uv += basis;
+      
+      //coloring
+      float rz = naefbm(uv*makem2(time*0.2));
+      
+      //rings
+      uv /= exp(mod(time*10.,3.14159));
+      rz *= pow(abs((0.1-naecirc(uv))),.9);
+      
+      //final color
+      vec3 col = vec3(.2,0.1,0.4)/rz;
+      col=pow(abs(col),vec3(.99));    
+      return vec4(col,1.);
+    }
+    `
+  },
+
   circles: {
     type: 'src',
     inputs: [
