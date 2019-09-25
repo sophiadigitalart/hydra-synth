@@ -2191,6 +2191,129 @@ naecirc: {
     }
     `
   },
+  glitchiso: {
+    type: 'util',
+    glsl: `float glitchiso( vec2 v ) {
+      v.y += 0.001;
+      v.x += sin(v.y * 20.0 + time * 0.1) * 0.2;
+      return length(v) - 0.4;
+    }
+    `
+  },
+  glitchgrad: {
+    type: 'util',
+    glsl: `vec2 glitchgrad( vec2 v ) {
+      float E = 0.00000002 * exp(1.25 * sin(time * 5.0));
+      float c = glitchiso(v);
+      float x = glitchiso(v + vec2(E, 0)) - glitchiso(v - vec2(E, 0));
+      float y = glitchiso(v + vec2(0, E)) - glitchiso(v - vec2(0, E));
+      return vec2(x, y) / E;
+    }
+    `
+  },
+  glitchdist: {
+    type: 'util',
+    glsl: `float glitchdist( vec2 v ) {
+      float i = glitchiso(v);
+      vec2 g = glitchgrad(v);
+      return abs(i) / length(g);
+    }
+    `
+  },
+  glitches: {
+    type: 'coord',
+    inputs: [
+      {
+        name: 'shake',
+        type: 'float',
+        default: 20
+      }, {
+        name: 'tempo',
+        type: 'float',
+        default: 20
+      }
+    ],
+    glsl: `vec2 glitches(vec2 st, float shake, float tempo){
+      float d = glitchdist(st);
+      vec3 color = mix(vec3(0, 0, 0), vec3(1, 0, 0), smoothstep(0.02, 0.022, d));
+      return color.xy;
+    }`
+  },
+  glitchHash: {
+    type: 'util',
+    glsl: `float glitchHash( float x ) {
+      return fract(sin(x * 11.1753) * 192652.37862);   
+    }
+    `
+  },
+  glitchNse: {
+    type: 'util',
+    glsl: `float glitchNse( float x ) {
+      float fl = floor(x);
+      return mix(glitchHash(fl), glitchHash(fl + 1.0), smoothstep(0.0, 1.0, fract(x)));    
+    }
+    `
+  },
+  glitch: {
+    type: 'coord',
+    inputs: [
+      {
+        name: 'shake',
+        type: 'float',
+        default: 20
+      }, {
+        name: 'tempo',
+        type: 'float',
+        default: 20
+      }
+    ],
+    glsl: `vec2 glitch(vec2 st, float shake, float tempo){
+		float s = shake;
+		float te = tempo;
+		vec2 shk = (vec2(glitchNse(s), glitchNse(s + 11.0)) * 2.0 - 1.0) * exp(-5.0 * fract(te * 4.0)) * 0.1;
+		return st + shk;
+    }`
+  },
+
+  BadTVResoRand: {
+    type: 'util',
+    glsl: `float BadTVResoRand( in float a, in float b ) {
+      return fract((cos(dot(vec2(a,b) ,vec2(12.9898,78.233))) * 43758.5453)); 
+    }
+    `
+  },
+  badtv: {
+    type: 'coord',
+    inputs: [
+      {
+        name: 'shake',
+        type: 'float',
+        default: 20
+      }, {
+        name: 'tempo',
+        type: 'float',
+        default: 20
+      }
+    ],
+    glsl: `vec2 badtv(vec2 st, float shake, float tempo){
+      float c = 1.;
+      c += shake * sin(time * 2. + st.y * 100. * tempo);
+			c += shake * sin(time * 1. + st.y * 80.);
+			c += shake * sin(time * 5. + st.y * 900. * tempo);
+      c += 1. * cos(time + st.x);
+      c *= sin(st.x*3.15);
+		c *= sin(st.y*3.);
+		c *= .9;	
+    st += time;
+      float r = BadTVResoRand(st.x, st.y);
+      float g = BadTVResoRand(st.x * 9., st.y * 9.);
+      float b = BadTVResoRand(st.x * 3., st.y * 3.);
+      st.x *= r*c*.35;
+      st.y *= b*c*.95;
+      //st.z *= g*c*.35;
+      return st;
+    }`
+  },
 
   circles: {
     type: 'src',
