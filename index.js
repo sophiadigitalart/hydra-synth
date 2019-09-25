@@ -79,12 +79,22 @@ class HydraSynth {
           peerConn.setRemoteDescription(new RTCSessionDescription(messageData.sdp));
         } else if (messageData.candidate) {
           console.log('Received ICECandidate from remote peer ' + messageData.candidate);
+        } else if (messageData.hydra) {
+          console.log('Received hydramsg from remote peer ' + messageData.hydra);
+        } else if (messageData.editortext) {
+          console.log('Received editortext from remote peer ' + messageData.editortext);
+          var editorEvt = new CustomEvent(messageData.event);
+          editorEvt.data = messageData.message;
+          if (window.editor && window.editor.cm ) {
+            window.editor.cm.setValue(messageData.message)
+          }
+          ws.dispatchEvent(editorEvt);
         } else {
           console.log('Received from remote peer ' + evt.data);
         }
-        var customEvt = new CustomEvent(messageData.event);
-        customEvt.data = messageData.message;
-        ws.dispatchEvent(customEvt);
+        //var customEvt = new CustomEvent(messageData.event);
+        //customEvt.data = messageData.message;
+        //ws.dispatchEvent(customEvt);
       };
       this.emit = function(evt, data) {
         ws.send(JSON.stringify({event:evt, message: data}));
