@@ -96,7 +96,7 @@ float _noise(vec3 v){
       {
         type: 'float',
         name: 'offset',
-        default : 0.1
+        default: 0.1
       }
     ],
     glsl: `vec4 noise(vec2 st, float scale, float offset){
@@ -114,12 +114,12 @@ float _noise(vec3 v){
       {
         type: 'float',
         name: 'speed',
-        default : 0.3
+        default: 0.3
       },
       {
         type: 'float',
         name: 'blending',
-        default : 0.3
+        default: 0.3
       }
     ],
     notes: 'from https://thebookofshaders.com/edit.php#12/vorono-01.frag, https://www.shadertoy.com/view/ldB3zc',
@@ -491,10 +491,10 @@ float _noise(vec3 v){
         type: 'float',
         default: 3.0
       }, {
-          name: 'offset',
-          type: 'float',
-          default: 0.0
-        }
+        name: 'offset',
+        type: 'float',
+        default: 0.0
+      }
     ],
     glsl: `vec2 repeatX(vec2 _st, float reps, float offset){
       vec2 st = _st * vec2(reps, 1.0);
@@ -517,9 +517,9 @@ float _noise(vec3 v){
         default: 3.0
       },
       {
-          name: 'offset',
-          type: 'float',
-          default: 0.5
+        name: 'offset',
+        type: 'float',
+        default: 0.5
       }
     ],
     glsl: `vec2 modulateRepeatX(vec2 _st, vec4 c1, float reps, float offset){
@@ -1052,6 +1052,60 @@ float _noise(vec3 v){
       return vec4(mix(intensity, c0.rgb, amount), c0.a);
     }`
   },
+  chromatic: {
+    type: 'color',
+    inputs: [
+      {
+        name: 'amount',
+        type: 'float',
+        default: 2.0
+      }
+    ],
+    glsl: `vec4 chromatic(vec4 c0, float amount){
+      vec2 offset = vec2(amount, 0.0);
+      //return vec4(texture(iChannel0, uv + offset.xy).r,  texture(iChannel0, uv).g, texture(iChannel0, uv + offset.yx).b, 1.0);
+        return vec4(c0.r * offset.x, c0.g, c0.b, c0.a);
+    }`
+  },
+  sobel: {
+    type: 'color',
+    inputs: [
+      {
+        name: 'amount',
+        type: 'float',
+        default: 2.0
+      }
+    ],
+    glsl: `vec4 sobel(vec4 c0, float amount){
+      // from https://www.shadertoy.com/view/MdK3Dc
+      mat3 sobelX = mat3(-1.0, -2.0, -1.0,
+                        0.0,  0.0, 0.0,
+                        1.0,  2.0,  1.0);
+      mat3 sobelY = mat3(-1.0,  0.0,  1.0,
+                        -2.0,  0.0, 2.0,
+                        -1.0,  0.0,  1.0);  
+      vec3 col;
+      float sumX = 0.0;	// x-axis change
+      float sumY = 0.0;	// y-axis change
+      
+      for(int i = -1; i <= 1; i++)
+      {
+          for(int j = -1; j <= 1; j++)
+          {
+              // Convolve kernels with image
+              sumX += length(1.0-c0.xyz) * float(sobelX[1+i][1+j]);
+              sumY += length(1.0-c0.xyz) * float(sobelY[1+i][1+j]);
+          }
+      }    
+      float g = abs(sumX) + abs(sumY);
+      g = sqrt((sumX*sumX) + (sumY*sumY));
+      if(g > 1.0)
+          col = vec3(1.0,1.0,1.0);
+      else
+          col = col * 0.5;
+      return vec4(sumX, g, sumY, c0.a);
+    }`
+  },
   hue: {
     type: 'color',
     inputs: [
@@ -1128,7 +1182,7 @@ float _noise(vec3 v){
       return col*length(p.xy);
     }
     `
-  },  
+  },
   colorgrid: {
     type: 'src',
     inputs: [
@@ -1321,7 +1375,7 @@ float _noise(vec3 v){
       return vec4( (1.2 - radius) * col );
     }
     `
-  },  
+  },
   floxdots: {
     type: 'src',
     inputs: [
@@ -1394,7 +1448,7 @@ float _noise(vec3 v){
       }
       return color;
     }`
-  },  
+  },
   dreads: {
     type: 'src',
     inputs: [
@@ -1775,7 +1829,7 @@ float _noise(vec3 v){
   },
   neon: {
     type: 'src',
-    inputs: [  
+    inputs: [
     ],
     glsl: `vec4 neon(vec2 _st) {
       vec2 v = -1.0 + 2.0 *_st;
@@ -2122,18 +2176,18 @@ float _noise(vec3 v){
   },
 
 
-makem2: {
-  type: 'util',
-  glsl: `mat2 makem2(in float theta) {
+  makem2: {
+    type: 'util',
+    glsl: `mat2 makem2(in float theta) {
     float c = cos(theta);
     float s = sin(theta);
     return mat2(c,-s,s,c);
   }
   `
-},
-naefbm: {
-  type: 'util',
-  glsl: `float naefbm( vec2 p ) {
+  },
+  naefbm: {
+    type: 'util',
+    glsl: `float naefbm( vec2 p ) {
     float z=2.;
 float rz = 0.;
 vec2 bp = p;
@@ -2147,8 +2201,8 @@ for (float i= 1.;i < 6.;i++ )
 return rz;
   }
   `
-},
-naecirc: {
+  },
+  naecirc: {
     type: 'util',
     glsl: `float naecirc( vec2 p ) {
       float r = length(p);
@@ -2167,29 +2221,29 @@ naecirc: {
       }
     ],
     glsl: `vec4 btnae(vec2 _st, float iSteps) {
-      vec2 uv = -1.0 + 2.0 *_st;
-      uv.x *= resolution.x/resolution.y;
-      uv*=4.;
-	
-      //get two rotated fbm calls and displace the domain
-      vec2 p2 = uv*.7;
-      vec2 basis = vec2(naefbm(p2-time*1.6),naefbm(p2+time*1.7));
-      basis = (basis-.5)*.2;
-      uv += basis;
-      
-      //coloring
-      float rz = naefbm(uv*makem2(time*0.2));
-      
-      //rings
-      uv /= exp(mod(time*10.,3.14159));
-      rz *= pow(abs((0.1-naecirc(uv))),.9);
-      
-      //final color
-      vec3 col = vec3(.2,0.1,0.4)/rz;
-      col=pow(abs(col),vec3(.99));    
-      return vec4(col,1.);
-    }
-    `
+    vec2 uv = -1.0 + 2.0 *_st;
+    uv.x *= resolution.x/resolution.y;
+    uv*=4.;
+
+    //get two rotated fbm calls and displace the domain
+    vec2 p2 = uv*.7;
+    vec2 basis = vec2(naefbm(p2-time*1.6),naefbm(p2+time*1.7));
+    basis = (basis-.5)*.2;
+    uv += basis;
+    
+    //coloring
+    float rz = naefbm(uv*makem2(time*0.2));
+    
+    //rings
+    uv /= exp(mod(time*2.,3.14159));
+    rz *= pow(abs((0.1-naecirc(uv))),.9);
+    
+    //final color
+    vec3 col = vec3(.2,0.1,0.4)/rz;
+    col=pow(abs(col),vec3(.99));    
+    return vec4(col,1.);
+  }
+  `
   },
   glitchiso: {
     type: 'util',
