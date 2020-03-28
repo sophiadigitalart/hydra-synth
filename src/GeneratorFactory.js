@@ -285,7 +285,7 @@ Generator.prototype.glsl = function (_output) {
           console.log(" websocket error", JSON.stringify(e))
         }
       }
-      before 25 september 2019 OK
+      before 25 september 2019 OK */
       if (window.socket) {
         try {
           window.socket.send(JSON.stringify({event:'frag', message: this.compile(pass)}));
@@ -294,7 +294,7 @@ Generator.prototype.glsl = function (_output) {
           // handle error (server not connected for example)
           console.log(" websocket error", JSON.stringify(e))
         }
-      } */
+      }
       return {
         frag: this.compile(pass),
         uniforms: Object.assign(output.uniforms, uniforms)

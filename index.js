@@ -118,9 +118,8 @@ class HydraSynth {
     });
     //window.socket = new ws('ws://turbulens.fr/ws/');
     window.socket = new ws('ws://127.0.0.1:8088');
-  
-    
     // websocket end
+
     // webrtc begin
     function onIceCandidateHandler(pc, event) {
       if (window.socket) window.socket.send(JSON.stringify({ 'candidate': event.candidate })); 
