@@ -2383,49 +2383,49 @@ return rz;
   },
   mandelMap: {
     type: 'util',
-    glsl: `float mandelMap(vec3 pos)
+    glsl: `float mandelMap(vec3 pos, float Power)
     {
       //float Power=(1.-iMouse.x/RENDERSIZE.x)*8.6+1.;
-      float Power=8.6;
+      //float Power=8.6;
       vec3 z = pos;
-   float dr = 1.0;
-   float r = 0.0;
-   for (int i = 0; i < 80 ; i++) {
-     r = length(z);
-         // if the length of the vector escapes toward
-         // infinity, we're not hitting this thing
-     if (r>100.) break;
-     
-     // convert to polar coordinates
-     float theta = acos(z.z/r);
-     float phi = atan(z.y,z.x);
-     dr =  pow( r, Power-1.0)*Power*dr + 1.0;
-     
-     // scale and rotate the point
-     float zr = pow(r*1.0,Power)+0.2;
-     theta = theta*Power+46.57;
-     phi = phi*Power+53.37;
-     
-     // convert back to cartesian coordinates
-     z = zr*vec3(sin(theta)*cos(phi), sin(phi)*sin(theta), cos(theta));
-         
-         // add the original point to the new one and recurse/repeat
-     z+=pos;
-   }
-     // fudge distance estimation from fractal
-     // using some calculus-y math I don't quite understand
-   return 0.5*log(r)*r/dr;
+      float dr = 1.0;
+      float r = 0.0;
+      for (int i = 0; i < 80 ; i++) {
+        r = length(z);
+            // if the length of the vector escapes toward
+            // infinity, we're not hitting this thing
+        if (r>100.) break;
+        
+        // convert to polar coordinates
+        float theta = acos(z.z/r);
+        float phi = atan(z.y,z.x);
+        dr =  pow( r, Power-1.0)*Power*dr + 1.0;
+        
+        // scale and rotate the point
+        float zr = pow(r*1.0,Power)+0.2;
+        theta = theta*Power+46.57;
+        phi = phi*Power+53.37;
+        
+        // convert back to cartesian coordinates
+        z = zr*vec3(sin(theta)*cos(phi), sin(phi)*sin(theta), cos(theta));
+            
+            // add the original point to the new one and recurse/repeat
+        z+=pos;
+      }
+      // fudge distance estimation from fractal
+      // using some calculus-y math I don't quite understand
+      return 0.5*log(r)*r/dr;
     }
     `
   },
   mandelMarch: {
     type: 'util',
-    glsl: `float mandelMarch(vec3 origin,vec3 ray,float maxdist)
+    glsl: `float mandelMarch(vec3 origin,vec3 ray,float maxdist,float power)
     {
       float t=.05;
       for(int i=0;i<40; i++)
       {
-		    float d=mandelMap(origin+ray*t);
+		    float d=mandelMap(origin+ray*t, power);
         if(d<0.0005||d>=maxdist) break;
         t+=d*0.95;
       }
@@ -2435,13 +2435,13 @@ return rz;
   },
   mandelNormal: {
     type: 'util',
-    glsl: `vec3 mandelNormal(vec3 p,float epsilon)
+    glsl: `vec3 mandelNormal(vec3 p,float epsilon,float power)
     {
       vec2 e=vec2(epsilon,0.);
       return normalize(
-        vec3(mandelMap(p+e.xyy)-mandelMap(p-e.xyy),
-        mandelMap(p+e.yxy)-mandelMap(p-e.yxy),
-        mandelMap(p+e.yyx)-mandelMap(p-e.yyx)
+        vec3(mandelMap(p+e.xyy, power)-mandelMap(p-e.xyy, power),
+        mandelMap(p+e.yxy, power)-mandelMap(p-e.yxy, power),
+        mandelMap(p+e.yyx, power)-mandelMap(p-e.yyx, power)
       ));
     }
     `
@@ -2459,25 +2459,29 @@ return rz;
     type: 'src',
     inputs: [
       {
+        name: 'power',
+        type: 'float',
+        default: 8.6
+      },
+      {
         name: 'maxdist',
         type: 'float',
         default: 14.0
       }
     ],
-    glsl: `vec4 mandels(vec2 _st, float maxdist) {
+    glsl: `vec4 mandels(vec2 _st, float power, float maxdist) {
       vec2 uv = (-1.0 + 2.0 *_st);
       uv.x *= resolution.x/resolution.y;
       
       vec3 camera=vec3(1.);
       camera=vec3(sin(time/4.),sin(time/4.),cos(time/4.))*1.2;
       vec3 ray=mandelLook(uv,camera,vec3(0.));
-	    float dist=mandelMarch(camera,ray, maxdist);
+	    float dist=mandelMarch(camera,ray, maxdist, power);
       vec3 hit=camera+ray*dist;
       float ao=pow(1.-dist/maxdist,20.);
-      float diffuse=clamp(dot(mandelNormal(hit,0.01*dist),normalize(camera)),0.5,1.);
+      float diffuse=clamp(dot(mandelNormal(hit,0.01*dist, power),normalize(camera)),0.5,1.);
       float shade=diffuse*ao*0.5+ao*0.5;
-      vec3 color=mandelHsv2rgb(vec3(length(hit)*.5+0.6,sin(length(hit*ao)*50.)*0.2+.8,shade*2.));     
-      //vec3 color=hit;     
+      vec3 color=mandelHsv2rgb(vec3(length(hit)*.5+0.6,sin(length(hit*ao)*50.)*0.2+.8,shade*2.));    
       return vec4(color,1.0);
     }
     `
