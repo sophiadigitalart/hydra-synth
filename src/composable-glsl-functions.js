@@ -2616,6 +2616,25 @@ return rz;
     }
     `
   },  
+  soundviz: {
+    type: 'src',
+    inputs: [
+      {
+        name: 'wave',
+        type: 'float',
+        default: 1.0
+      }
+    ],
+    glsl: `vec4 soundviz(vec2 _st, float wave)
+    {
+      vec2 uv = -1.0+2.0*_st;	
+      float col = 0.0;
+      uv.y += sin(time * 6.0 + uv.x*1.5)*wave;
+      col += abs(0.8/uv.y) * wave;
+      return vec4(col);
+    }
+    `
+  },  
   circles: {
     type: 'src',
     inputs: [
