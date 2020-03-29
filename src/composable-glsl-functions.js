@@ -2560,6 +2560,34 @@ return rz;
     }
     `
   },
+  saw: {
+    type: 'src',
+    inputs: [
+      {
+        name: 'iZoom',
+        type: 'float',
+        default: 1.0
+      }
+    ],
+    glsl: `vec4 saw(vec2 _st, float iZoom)
+    {
+      vec2 q = iZoom * (-1.0+2.0*_st);
+      float TAU = 6.28318530718;
+      float t = smoothstep(0.0, 1.0, fract(time/2.));	
+      float r = length(q);
+      float a = atan(q.y,q.x);
+      float u = 0.0;
+      u = 10.*a + 3.*TAU*t*(1.- 4.0*(1. - r)*sin(TAU*t));
+      u = 20.0*r*(1.0 + 0.1*cos(u));
+      u = 0.5 + 0.5*cos(u);
+      u = min(floor(2.0*u),1.0);	
+      u *= 1.0-smoothstep(1.,1.+0.00001,r);
+      vec3 Col1 = vec3(0.01);
+      vec3 Col2 = vec3(0.95);	
+      return vec4(mix(Col1, Col2, u),1.0);
+    }
+    `
+  },
   circles: {
     type: 'src',
     inputs: [
