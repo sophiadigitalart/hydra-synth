@@ -2486,6 +2486,80 @@ return rz;
     }
     `
   },
+
+  padBox: {
+    type: 'util',
+    glsl: `float padBox(vec2 p, vec2 b)
+    {
+      vec2 d = abs(p) - b;
+      return min(max(d.x, d.y), 0.0) + length(max(d, 0.0));
+    }
+    `
+  },
+  pad: {
+    type: 'util',
+    glsl: `void pad(out vec4 bcol, inout vec3 acol, vec2 uv, float i1)
+    {
+      float v; vec3 col;
+      v = padBox(uv, vec2(0.1)) - 0.05;
+      float l = length(uv);
+      float shd = exp(-40.0 * max(v, 0.0));
+      col = vec3(exp(l * -4.0) * 0.3 + 0.2);
+      col *= 1.0 - vec3(exp(-100.0 * abs(v))) * 0.4;
+      v = smoothstep(4.0 / resolution.y, 0.0, v);
+      bcol = mix(vec4(0.0, 0.0, 0.0, shd * 0.5), vec4(col, 1.0), v);
+      col = vec3(0.5, 0.0, 1.0) * exp(-30.0 * l * l) * 0.8 * i1;
+      acol += col;
+    }
+    `
+  },  
+  padBf: {
+    type: 'util',
+    glsl: `float padBf(float t)
+    {
+      float v = 0.04;
+      return exp(t * -30.0) + smoothstep(0.25 + v, 0.25 - v, abs(t * 2.0 - 1.0));
+    }
+    `
+  },
+  pads: {
+    type: 'src',
+    inputs: [
+      {
+        name: 'power',
+        type: 'float',
+        default: 42.0
+      }
+    ],
+    glsl: `vec4 pads(vec2 _st, float power) {
+      vec2 p = (-1.0 + 2.0 *_st);
+      p.x *= resolution.x/resolution.y;
+      float te = time * 0.7475; // 174 bpm
+      p *= 1.0 - cos((te + 0.75) * 6.283185307179586476925286766559) * 0.01;
+      vec2 pp = p;
+      p.x += 0.6;
+      float i1 = padBf(fract(0.75 + te));
+      float i2 = padBf(fract(0.5  + te));
+      float i3 = padBf(fract(0.25 + te));
+      float i4 = padBf(fract(0.0  + te));
+      vec3 col = vec3(0.1);
+      vec4 bcol; vec3 acol = vec3(0.0);
+      pad(bcol, acol, p, i1);
+      col = mix(col, bcol.xyz, bcol.w);
+      pad(bcol, acol, p - vec2(0.4, 0.0), i2);
+      col = mix(col, bcol.xyz, bcol.w);
+      pad(bcol, acol, p - vec2(0.8, 0.0), i3);
+      col = mix(col, bcol.xyz, bcol.w);
+      pad(bcol, acol, p - vec2(1.2, 0.0), i4);
+      col = mix(col, bcol.xyz, bcol.w);
+      col += acol;
+      col *= exp((length(pp) - 0.5) * -1.0) * 0.5 + 0.5;
+      col = pow(col, vec3(1.2, 1.1, 1.0) * 2.0) * 4.0;
+      col = pow(col, vec3(1.0 / 2.2));
+      return vec4(col,1.0);
+    }
+    `
+  },
   circles: {
     type: 'src',
     inputs: [
