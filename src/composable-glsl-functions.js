@@ -1053,30 +1053,54 @@ float _noise(vec3 v){
     }`
   },
   chromatic: {
-    type: 'color',
+    type: 'combineCoord',
     inputs: [
       {
-        name: 'amount',
+        name: 'color',
+        type: 'vec4'
+      },
+      {
+        name: 'offx',
+        type: 'float',
+        default: 3.0
+      },
+      {
+        name: 'offy',
         type: 'float',
         default: 2.0
       }
     ],
-    glsl: `vec4 chromatic(vec4 c0, float amount){
-      vec2 offset = vec2(amount, 0.0);
-      //return vec4(texture(iChannel0, uv + offset.xy).r,  texture(iChannel0, uv).g, texture(iChannel0, uv + offset.yx).b, 1.0);
-        return vec4(c0.r * offset.x, c0.g, c0.b, c0.a);
+    glsl: `
+    vec2 chromatic(vec2 _st, vec4 c1, float offx, float offy){
+      vec2 st = _st * vec2(offx, offy);
+      return vec2( st.x * c1.r, st.y * c1.g);
     }`
   },
   sobel: {
-    type: 'color',
+    type: 'combineCoord',
     inputs: [
+      {
+        name: 'color',
+        type: 'vec4'
+      },
+      {
+        name: 'multiple',
+        type: 'float',
+        default: 10.0
+      },
+      {
+        name: 'offset',
+        type: 'float',
+        default: 3.0
+      },
       {
         name: 'amount',
         type: 'float',
         default: 2.0
       }
     ],
-    glsl: `vec4 sobel(vec4 c0, float amount){
+    glsl: `
+    vec2 sobel(vec2 st, vec4 c1, float multiple, float offset, float amount){
       // from https://www.shadertoy.com/view/MdK3Dc
       mat3 sobelX = mat3(-1.0, -2.0, -1.0,
                         0.0,  0.0, 0.0,
@@ -1093,8 +1117,8 @@ float _noise(vec3 v){
           for(int j = -1; j <= 1; j++)
           {
               // Convolve kernels with image
-              sumX += length(1.0-c0.xyz) * float(sobelX[1+i][1+j]);
-              sumY += length(1.0-c0.xyz) * float(sobelY[1+i][1+j]);
+              sumX += length(1.0+c1.r+st.x) * float(sobelX[1+i][1+j]);
+              sumY += length(1.0+c1.g+st.y) * float(sobelY[1+i][1+j]);
           }
       }    
       float g = abs(sumX) + abs(sumY);
@@ -1102,8 +1126,8 @@ float _noise(vec3 v){
       if(g > 1.0)
           col = vec3(1.0,1.0,1.0);
       else
-          col = col * 0.5;
-      return vec4(sumX, g, sumY, c0.a);
+          col = col * 0.1;
+      return vec2(col.x * c1.r, col.y * c1.g);
     }`
   },
   hue: {
@@ -2526,15 +2550,15 @@ return rz;
     type: 'src',
     inputs: [
       {
-        name: 'power',
+        name: 'start',
         type: 'float',
         default: 42.0
       }
     ],
-    glsl: `vec4 pads(vec2 _st, float power) {
+    glsl: `vec4 pads(vec2 _st, float start) {
       vec2 p = (-1.0 + 2.0 *_st);
       p.x *= resolution.x/resolution.y;
-      float te = time * 0.7475; // 174 bpm
+      float te = (start + time) * 0.7475; // 174 bpm
       p *= 1.0 - cos((te + 0.75) * 6.283185307179586476925286766559) * 0.01;
       vec2 pp = p;
       p.x += 0.6;
@@ -2632,6 +2656,104 @@ return rz;
       uv.y += sin(time * 6.0 + uv.x*1.5)*wave;
       col += abs(0.8/uv.y) * wave;
       return vec4(col);
+    }
+    `
+  },  
+  colortunnel: {
+    type: 'src',
+    inputs: [
+      {
+        name: 'wave',
+        type: 'float',
+        default: 1.0
+      }
+    ],
+    glsl: `vec4 colortunnel(vec2 _st, float wave)
+    {
+      vec2 p = -1.0+2.0*_st;	 
+      vec4 col;
+      float x,y;
+      x = atan(p.x,p.y);
+      y = 1./length(p.xy);
+      col.x = 0.5-sin(x*5. + sin(time)/3.) * sin(y*5. + time);
+      col.y = -sin(x*5. - time + sin(y+time*wave));
+      col.z = 0.6-col.x + col.y * sin(y*4.+time);
+      col = clamp(col,0.,1.);
+      col.y = pow(col.y,.95);
+      col.z = pow(col.z,.95);
+      return col*length(p.xy);
+    }
+    `
+  }, 
+  trapCsqr: {
+    type: 'util',
+    glsl: `vec2 trapCsqr( vec2 a ) { return vec2(a.x*a.x-a.y*a.y, 2.0*a.x*a.y ); }`
+  },
+  trapDet: {
+    type: 'util',
+    glsl: `float trapDet(vec2 a, vec2 b) { return a.x*b.y-a.y*b.x;}`
+  }, 
+  trap: {
+    type: 'src',
+    inputs: [
+      {
+        name: 'mx',
+        type: 'float',
+        default: 0.0
+      },
+      {
+        name: 'my',
+        type: 'float',
+        default: 0.0
+      }
+    ],
+    glsl: `vec4 trap(vec2 _st, float mx, float my)
+    {
+      vec2 p = -1.0+2.0*_st;    
+      float brightness=.85;
+    float saturation=.6;
+    float zoom=0.5;
+    float bailout=1e5;
+    p.x*=resolution.x/resolution.y;
+    p/=zoom*0.5;
+    vec2 iMouse = vec2(mx, my);
+    vec2 q = (iMouse.xy)/ resolution.xy-(iMouse.xy==vec2(0.,0.)?0.:0.5);
+    q.x*=resolution.x/resolution.y;
+    q/=zoom*0.5;
+    float k = 0.0;
+    float dz;
+    vec2 zn=normalize(p);			
+    vec2 z=p;
+    vec2 z0=p;
+    vec2 trap = vec2(bailout);
+    for (int i=0; i<150; i++) {
+        vec2 prevz=z;
+		z= trapCsqr(z-z0)+ z+z0;
+        trap = min(trap,vec2(
+            abs(trapDet(z-z0,z-q)),
+            dot(z-q,z-q)
+        ));	
+		dz=length(z-prevz);
+        if(dz==0.)break;
+        if(dz<1.0)dz=1.0/dz;
+        if(dz>bailout){
+            k = bailout/dz;
+            z=(k*prevz+(1.-k)*z);
+            float k1 =sqrt(sqrt(k))/float(i+1);
+            if(dot(z,z)>0.)zn=k1*normalize(z)+(1.-k1)*zn;
+            break;
+        }	                          
+        k = 1./float(i+1);
+        if(dot(z,z)>0.)zn=k*normalize(z)+(1.-k)*zn;		
+    }
+    vec3 color=0.2+0.8*abs(vec3(zn.x*zn.x,zn.x*zn.x,zn.y))+0.2*sin(vec3(-0.5,-0.2,0.8)+log(abs(trap.x*trap.y*trap.y)));
+	trap =sqrt(trap);
+	trap=1.-smoothstep(0.05,0.07,trap);
+    color =mix( color,vec3(1.),trap.y);
+    color =mix( color,vec3(1.),1.-step(0.04,length(p-q)));
+    color =mix( color,vec3(0.),1.-step(0.02,length(p-q)));       
+    color=mix(vec3(length(color)),color,saturation)*brightness;
+    return vec4(color,1.0);
     }
     `
   },  
