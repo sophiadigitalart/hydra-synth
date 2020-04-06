@@ -2685,6 +2685,45 @@ return rz;
     }
     `
   }, 
+  fernat: {
+    type: 'src',
+    inputs: [
+      {
+        name: 'wave',
+        type: 'float',
+        default: 1.0
+      }
+    ],
+    glsl: `vec4 fernat(vec2 _st, float wave)
+    {
+      vec2 p = -1.0+2.0*_st;	 
+      float t = sin(time *0.9) * 10.0 * wave,
+          l = length(p),
+          r = l * exp2( t * .1),
+          f = sin(r * r) * sin(t),
+          g = p.x / l;
+      return vec4( .1 / abs(f - g) );
+    }
+    `
+  }, 
+  bubble: {
+    type: 'src',
+    inputs: [
+      {
+        name: 'wave',
+        type: 'float',
+        default: 1.0
+      }
+    ],
+    glsl: `vec4 bubble(vec2 _st, float wave)
+    {
+      vec2 p = -1.0+2.0*_st;	 
+      vec2 a = wave * vec2( log(length(p)), atan((p).y,(p).x) );
+      vec2 f = exp((a).x)* vec2(cos((a).y), sin((a).y)) - (sin(wave * time) + 1.);
+      return vec4( .03/ abs(length(f) - (2.* sin(time) + 2.)));
+    }
+    `
+  }, 
   trapCsqr: {
     type: 'util',
     glsl: `vec2 trapCsqr( vec2 a ) { return vec2(a.x*a.x-a.y*a.y, 2.0*a.x*a.y ); }`
@@ -2711,49 +2750,49 @@ return rz;
     {
       vec2 p = -1.0+2.0*_st;    
       float brightness=.85;
-    float saturation=.6;
-    float zoom=0.5;
-    float bailout=1e5;
-    p.x*=resolution.x/resolution.y;
-    p/=zoom*0.5;
-    vec2 iMouse = vec2(mx, my);
-    vec2 q = (iMouse.xy)/ resolution.xy-(iMouse.xy==vec2(0.,0.)?0.:0.5);
-    q.x*=resolution.x/resolution.y;
-    q/=zoom*0.5;
-    float k = 0.0;
-    float dz;
-    vec2 zn=normalize(p);			
-    vec2 z=p;
-    vec2 z0=p;
-    vec2 trap = vec2(bailout);
-    for (int i=0; i<150; i++) {
-        vec2 prevz=z;
-		z= trapCsqr(z-z0)+ z+z0;
-        trap = min(trap,vec2(
-            abs(trapDet(z-z0,z-q)),
-            dot(z-q,z-q)
-        ));	
-		dz=length(z-prevz);
-        if(dz==0.)break;
-        if(dz<1.0)dz=1.0/dz;
-        if(dz>bailout){
-            k = bailout/dz;
-            z=(k*prevz+(1.-k)*z);
-            float k1 =sqrt(sqrt(k))/float(i+1);
-            if(dot(z,z)>0.)zn=k1*normalize(z)+(1.-k1)*zn;
-            break;
-        }	                          
-        k = 1./float(i+1);
-        if(dot(z,z)>0.)zn=k*normalize(z)+(1.-k)*zn;		
-    }
-    vec3 color=0.2+0.8*abs(vec3(zn.x*zn.x,zn.x*zn.x,zn.y))+0.2*sin(vec3(-0.5,-0.2,0.8)+log(abs(trap.x*trap.y*trap.y)));
-	trap =sqrt(trap);
-	trap=1.-smoothstep(0.05,0.07,trap);
-    color =mix( color,vec3(1.),trap.y);
-    color =mix( color,vec3(1.),1.-step(0.04,length(p-q)));
-    color =mix( color,vec3(0.),1.-step(0.02,length(p-q)));       
-    color=mix(vec3(length(color)),color,saturation)*brightness;
-    return vec4(color,1.0);
+      float saturation=.6;
+      float zoom=0.5;
+      float bailout=1e5;
+      p.x*=resolution.x/resolution.y;
+      p/=zoom*0.5;
+      vec2 iMouse = vec2(mx, my);
+      vec2 q = (iMouse.xy)/ resolution.xy-(iMouse.xy==vec2(0.,0.)?0.:0.5);
+      q.x*=resolution.x/resolution.y;
+      q/=zoom*0.5;
+      float k = 0.0;
+      float dz;
+      vec2 zn=normalize(p);			
+      vec2 z=p;
+      vec2 z0=p;
+      vec2 trap = vec2(bailout);
+      for (int i=0; i<150; i++) {
+          vec2 prevz=z;
+      z= trapCsqr(z-z0)+ z+z0;
+          trap = min(trap,vec2(
+              abs(trapDet(z-z0,z-q)),
+              dot(z-q,z-q)
+          ));	
+      dz=length(z-prevz);
+          if(dz==0.)break;
+          if(dz<1.0)dz=1.0/dz;
+          if(dz>bailout){
+              k = bailout/dz;
+              z=(k*prevz+(1.-k)*z);
+              float k1 =sqrt(sqrt(k))/float(i+1);
+              if(dot(z,z)>0.)zn=k1*normalize(z)+(1.-k1)*zn;
+              break;
+          }	                          
+          k = 1./float(i+1);
+          if(dot(z,z)>0.)zn=k*normalize(z)+(1.-k)*zn;		
+      }
+      vec3 color=0.2+0.8*abs(vec3(zn.x*zn.x,zn.x*zn.x,zn.y))+0.2*sin(vec3(-0.5,-0.2,0.8)+log(abs(trap.x*trap.y*trap.y)));
+	    trap =sqrt(trap);
+	    trap=1.-smoothstep(0.05,0.07,trap);
+      color =mix( color,vec3(1.),trap.y);
+      color =mix( color,vec3(1.),1.-step(0.04,length(p-q)));
+      color =mix( color,vec3(0.),1.-step(0.02,length(p-q)));       
+      color=mix(vec3(length(color)),color,saturation)*brightness;
+      return vec4(color,1.0);
     }
     `
   },  
